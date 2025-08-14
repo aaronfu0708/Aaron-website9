@@ -19,7 +19,6 @@ export default function AnalysisOverlay({
   const [chatRooms, setChatRooms] = useState({});
 
   // 即時對話訊息狀態
-  const [messages, setMessages] = useState([]); // 即時對話訊息
   const [isLoading, setIsLoading] = useState(false); // 等待 AI 回覆中
 
   // 獲取當前題目的聊天記錄
@@ -55,8 +54,12 @@ export default function AnalysisOverlay({
     const text = inputValue.trim();
     if (!text || isLoading) return;
 
+    // 獲取當前題目的聊天記錄
+    const currentMessages = getCurrentChatRoom();
+    
     // 先把使用者訊息丟進對話
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
+    const newMessages = [...currentMessages, { role: "user", content: text }];
+    updateCurrentChatRoom(newMessages);
     setInputValue("");
     setIsLoading(true);
 
@@ -90,13 +93,14 @@ export default function AnalysisOverlay({
         data?.reply ??
         "（沒有收到 AI 內容）";
 
-      setMessages((prev) => [...prev, { role: "ai", content: aiText }]);
+      // 更新當前題目的聊天記錄
+      const updatedMessages = [...newMessages, { role: "ai", content: aiText }];
+      updateCurrentChatRoom(updatedMessages);
     } catch (err) {
       console.error("AI 對話錯誤：", err);
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", content: "抱歉，伺服器忙碌或發生錯誤，稍後再試。" },
-      ]);
+      // 更新當前題目的聊天記錄
+      const updatedMessages = [...newMessages, { role: "ai", content: "抱歉，伺服器忙碌或發生錯誤，稍後再試。" }];
+      updateCurrentChatRoom(updatedMessages);
     } finally {
       setIsLoading(false);
     }
@@ -115,9 +119,10 @@ export default function AnalysisOverlay({
     lines.push("");
     lines.push(`對於題目:${currentTopic?.title || ""}還有什麼問題嗎?`);
 
-    if (messages.length > 0) {
+    const currentMessages = getCurrentChatRoom();
+    if (currentMessages.length > 0) {
       lines.push("");
-      messages.forEach((m) => {
+      currentMessages.forEach((m) => {
         const who = m.role === "user" ? "你" : "AI";
         lines.push(`### ${who}：`);
         lines.push(m.content || "");
@@ -196,49 +201,52 @@ export default function AnalysisOverlay({
             <div className={`${styles.message} ${styles.ai}`}>
               {"對於題目：" + (currentTopic?.title || "") + "還有什麼問題嗎？"}{" "}
             </div>
-            {messages.length === 0 ? (
-              <>
-                <div className={`${styles.message} ${styles.user}`}>
-                  你打的問題會在這裡
-                </div>
-                <div className={`${styles.message} ${styles.placeholder}`}>
-                  <div
-                    className={styles["placeholder-icon"]}
-                    onClick={onOpenAnalysisFavoriteModal}
-                  >
-                    +
+            {(() => {
+              const currentMessages = getCurrentChatRoom();
+              return currentMessages.length === 0 ? (
+                <>
+                  <div className={`${styles.message} ${styles.user}`}>
+                    你打的問題會在這裡
                   </div>
-                  AI的回答在這裡
-                </div>
-              </>
-            ) : (
-              <>
-                {messages.map((m, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.message} ${
-                      m.role === "user" ? styles.user : styles.ai
-                    }`}
-                  >
-                    {m.role === "ai" && (
-                      <div
-                        className={styles["placeholder-icon"]}
-                        onClick={() => handleOpenFavoriteWithText(m.content)}
-                      >
-                        +
-                      </div>
-                    )}
-                    <span>{m.content}</span>
-                  </div>
-                ))}
-
-                {isLoading && (
                   <div className={`${styles.message} ${styles.placeholder}`}>
-                    正在思考中…
+                    <div
+                      className={styles["placeholder-icon"]}
+                      onClick={onOpenAnalysisFavoriteModal}
+                    >
+                      +
+                    </div>
+                    AI的回答在這裡
                   </div>
-                )}
-              </>
-            )}
+                </>
+              ) : (
+                <>
+                  {currentMessages.map((m, i) => (
+                    <div
+                      key={i}
+                      className={`${styles.message} ${
+                        m.role === "user" ? styles.user : styles.ai
+                      }`}
+                    >
+                      {m.role === "ai" && (
+                        <div
+                          className={styles["placeholder-icon"]}
+                          onClick={() => handleOpenFavoriteWithText(m.content)}
+                        >
+                          +
+                        </div>
+                      )}
+                      <span>{m.content}</span>
+                    </div>
+                  ))}
+
+                  {isLoading && (
+                    <div className={`${styles.message} ${styles.placeholder}`}>
+                      正在思考中…
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
