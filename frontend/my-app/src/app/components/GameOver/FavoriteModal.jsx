@@ -163,16 +163,16 @@ export default function FavoriteModal({
     }
 
     try {
-      // 先標記題目為收藏狀態（後端收藏系統）
-      try {
-        const result = await sendFavoriteToBackend();
-        if (result?.message) {
-          console.log("收藏狀態更新成功:", result.message);
-        }
-      } catch (err) {
-        console.warn("收藏狀態更新失敗:", err.message);
-        // 不阻擋筆記創建流程
-      }
+      // 註解掉後端收藏系統調用，避免重複創建記錄
+      // try {
+      //   const result = await sendFavoriteToBackend();
+      //   if (result?.message) {
+      //     console.log("收藏狀態更新成功:", result.message);
+      //   }
+      // } catch (err) {
+      //   console.warn("收藏狀態更新失敗:", err.message);
+      //   // 不阻擋筆記創建流程
+      // }
 
       if (currentNoteId === "add_note" || currentNoteId === null) {
         // 新增筆記
