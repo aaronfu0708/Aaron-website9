@@ -187,8 +187,19 @@ export default function FavoriteModal({
         };
 
         if (window.addNoteToSystem) {
-          await window.addNoteToSystem(newNote);
-          onShowCustomAlert(`題目已收藏到「${currentSubject}」主題！`);
+          const result = await window.addNoteToSystem(newNote);
+          if (result && result.success) {
+            onShowCustomAlert(`題目已收藏到「${currentSubject}」主題！`);
+            // 关闭模态框
+            onClose();
+            return;
+          } else {
+            onShowCustomAlert("收藏失敗，請重試！");
+            return;
+          }
+        } else {
+          onShowCustomAlert("系統錯誤：找不到收藏功能！");
+          return;
         }
       } else {
         // 添加到現有筆記
@@ -232,6 +243,9 @@ ${questionContent}`;
             targetNote.content = updatedContent;
             
             onShowCustomAlert(`題目已添加到筆記「${targetNote.title}」中！`);
+            // 关闭模态框
+            onClose();
+            return;
           } catch (error) {
             console.error("更新筆記失敗:", error);
             onShowCustomAlert(`更新筆記失敗：${error.message}`);

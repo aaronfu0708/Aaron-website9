@@ -222,10 +222,19 @@ export default function AnalysisFavoriteModal({
         };
 
         if (window.addNoteToSystem) {
-          window.addNoteToSystem(newNote);
+          const result = await window.addNoteToSystem(newNote);
+          if (result && result.success) {
+            onShowCustomAlert(`內容已收藏到「${currentSubject}」主題！`);
+            onClose();
+            return;
+          } else {
+            onShowCustomAlert("收藏失敗，請重試！");
+            return;
+          }
+        } else {
+          onShowCustomAlert("系統錯誤：找不到收藏功能！");
+          return;
         }
-
-        onShowCustomAlert(`內容已收藏到「${currentSubject}」主題！`);
       } else {
         // 添加到現有筆記
         const targetNote = Array.isArray(effectiveNotes) ? effectiveNotes.find((note) => note.id === currentNoteId) : null;

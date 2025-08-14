@@ -217,6 +217,14 @@ export async function addNote(note) {
     }
 
     const result = await noteRes.json();
+    
+    // 添加成功后，同步更新本地数据
+    try {
+      await loadUserQuizAndNotes();
+    } catch (syncError) {
+      console.warn("同步本地数据失败:", syncError);
+    }
+    
     return { success: true, message: "筆記添加成功！", data: result };
   } catch (error) {
     console.error("新增筆記失敗:", error);
