@@ -1,0 +1,58 @@
+<!-- test_socketio.html -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Socket.IO 題目生成測試</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Socket.IO 題目生成測試</h2>
+    <label>主題: <input type="text" id="topic" value="數學"></label><br>
+    <label>難度: 
+        <select id="difficulty">
+            <option value="beginner">beginner</option>
+            <option value="intermediate">intermediate</option>
+            <option value="advanced">advanced</option>
+            <option value="master">master</option>
+            <option value="test">test</option>
+        </select>
+    </label><br>
+    <label>題目數量: <input type="number" id="question_count" value="5" min="1"></label><br>
+    <label>批次大小: <input type="number" id="batch_size" value="3" min="1"></label><br>
+    <button onclick="generateQuiz()">產生題目</button>
+    <hr>
+    <div id="result"></div>
+
+    <script>
+        // 連線到 Flask Socket.IO 伺服器
+        const socket = io('http://localhost:5000');
+
+        socket.on('connect', () => {
+            document.getElementById('result').innerHTML += '<p>已連線到伺服器</p>';
+        });
+
+        socket.on('quiz_batch', (questions) => {
+            document.getElementById('result').innerHTML += `<pre style="background:#eee;padding:8px;">${JSON.stringify(questions, null, 2)}</pre>`;
+        });
+
+        socket.on('quiz_done', (data) => {
+            document.getElementById('result').innerHTML += `<p style="color:green;">${data.message}</p>`;
+        });
+
+        function generateQuiz() {
+            document.getElementById('result').innerHTML = '';
+            const topic = document.getElementById('topic').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const question_count = parseInt(document.getElementById('question_count').value, 10);
+            const batch_size = parseInt(document.getElementById('batch_size').value, 10);
+            socket.emit('generate_quiz', {
+                topic,
+                difficulty,
+                question_count,
+                batch_size
+            });
+        }
+    </script>
+</body>
+</html>
