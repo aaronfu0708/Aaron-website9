@@ -132,14 +132,6 @@ export function useGameoverUtils() {
         setNotes(updatedNotes);
         setSubjects(updatedSubjects);
         
-        // 强制刷新页面数据，确保笔记页面能看到最新数据
-        if (typeof window !== 'undefined' && window.location) {
-          // 如果当前在笔记页面，触发页面刷新
-          if (window.location.pathname.includes('/note')) {
-            window.location.reload();
-          }
-        }
-        
         if (window.showCustomAlert) {
           window.showCustomAlert(result.message);
         }

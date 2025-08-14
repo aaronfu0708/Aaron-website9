@@ -187,18 +187,9 @@ export default function FavoriteModal({
         };
 
         if (window.addNoteToSystem) {
-          const result = await window.addNoteToSystem(newNote);
-          if (result && result.success) {
-            onShowCustomAlert(`題目已收藏到「${currentSubject}」主題！`);
-            // 关闭模态框
-            onClose();
-            return;
-          } else {
-            onShowCustomAlert("收藏失敗，請重試！");
-            return;
-          }
-        } else {
-          onShowCustomAlert("系統錯誤：找不到收藏功能！");
+          await window.addNoteToSystem(newNote);
+          onShowCustomAlert(`題目已收藏到「${currentSubject}」主題！`);
+          onClose();
           return;
         }
       } else {
