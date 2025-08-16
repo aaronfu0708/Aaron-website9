@@ -500,15 +500,116 @@ export async function loadUserQuizAndNotes() {
   }
 }
 
-// 生成題目
-export function generateQuestions(noteId) {
-  // 這個功能暫時保留本地邏輯
-  const note = notes.find((n) => n.id === noteId);
-  if (note) {
-    return {
-      success: true,
-      message: `正在根據筆記「${note.title}」生成題目...\n\n題目已生成完成！\n\n題目：基於${note.subject}的相關練習題\n\n請前往遊戲頁面查看新生成的題目。`,
-    };
+// 根據筆記內容AI生成遊戲主題
+export async function generateQuestions(noteContent, noteTitle = '') {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return { success: false, message: "請先登入！" };
+    }
+
+    // 檢查筆記內容是否有效
+    if (!noteContent || typeof noteContent !== 'string' || noteContent.trim().length === 0) {
+      return { success: false, message: "筆記內容無效或為空！" };
+    }
+
+    // 調用後端AI API生成主題
+    const res = await fetch("http://127.0.0.1:5000/api/generate_topic_from_note", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`, // 添加認證
+      },
+      body: JSON.stringify({
+        note_content: noteContent.trim(),
+        note_title: noteTitle.trim()
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`AI服務錯誤: ${res.status} - ${res.statusText}`);
+    }
+
+    const result = await res.json();
+    
+    if (result.success && result.topic) {
+      return {
+        success: true,
+        topic: result.topic,
+        message: `已根據筆記內容生成遊戲主題：「${result.topic}」`,
+        isFallback: result.is_fallback || false
+      };
+    } else {
+      throw new Error(result.message || "AI服務返回無效結果");
+    }
+
+  } catch (error) {
+    console.error("生成主題失敗:", error);
+    
+    // 如果AI服務失敗，使用前端備用邏輯
+    try {
+      const fallbackTopic = generateFallbackTopic(noteContent, noteTitle);
+      return {
+        success: true,
+        topic: fallbackTopic,
+        message: `AI服務暫時不可用，使用備用邏輯生成主題：「${fallbackTopic}」`,
+        isFallback: true
+      };
+    } catch (fallbackError) {
+      console.error("備用邏輯也失敗:", fallbackError);
+      return {
+        success: false,
+        message: "生成主題失敗，請稍後再試或手動輸入主題"
+      };
+    }
   }
-  return { success: false, message: "找不到要生成題目的筆記！" };
+}
+
+// 前端備用主題生成邏輯（當AI服務不可用時）
+function generateFallbackTopic(noteContent, noteTitle = '') {
+  try {
+    // 優先使用標題，如果沒有標題則使用內容
+    const primaryText = noteTitle || noteContent;
+    const content = String(primaryText || "").toLowerCase().trim();
+    
+    if (!content) {
+      throw new Error("筆記內容為空");
+    }
+    
+    // 常見學科關鍵詞映射
+    const subjectKeywords = {
+      '數學': ['數學', '計算', '公式', '幾何', '代數', '微積分', '統計', '函數', '方程', '三角'],
+      '物理': ['物理', '力學', '電學', '光學', '熱學', '量子', '能量', '運動', '重力', '電磁'],
+      '化學': ['化學', '分子', '原子', '反應', '元素', '化合物', '化學鍵', '溶液', '酸鹼', '氧化'],
+      '生物': ['生物', '細胞', '基因', '進化', '生態', '解剖', '器官', '組織', '代謝', '遺傳'],
+      '歷史': ['歷史', '古代', '近代', '戰爭', '革命', '文化', '朝代', '帝國', '文明', '事件'],
+      '地理': ['地理', '地形', '氣候', '人口', '經濟', '環境', '國家', '城市', '山脈', '河流'],
+      '文學': ['文學', '小說', '詩歌', '散文', '戲劇', '作者', '作品', '風格', '流派', '修辭'],
+      '語言': ['語言', '語法', '詞彙', '發音', '翻譯', '寫作', '文法', '句型', '詞性', '時態'],
+      '計算機': ['計算機', '程式', '算法', '數據', '網絡', '軟件', '編程', '代碼', '系統', '應用'],
+      '經濟': ['經濟', '市場', '貿易', '金融', '投資', '政策', '貨幣', '銀行', '股票', '通貨膨脹']
+    };
+
+    // 檢查內容中是否包含學科關鍵詞
+    for (const [subject, keywords] of Object.entries(subjectKeywords)) {
+      if (keywords.some(keyword => content.includes(keyword))) {
+        return `${subject}基礎練習`;
+      }
+    }
+
+    // 如果沒有找到特定學科，使用通用主題
+    const words = content.split(/\s+/).filter(word => word.length > 2);
+    if (words.length > 0) {
+      // 選擇前5個詞中的一個，避免隨機性過大
+      const selectedWord = words[Math.min(4, words.length - 1)];
+      return `${selectedWord}相關練習`;
+    }
+
+    // 最後的備用選項
+    return "綜合知識練習";
+    
+  } catch (error) {
+    console.error("備用主題生成失敗:", error);
+    return "綜合知識練習"; // 最安全的備用選項
+  }
 }

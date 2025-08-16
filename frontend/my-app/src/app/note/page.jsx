@@ -44,23 +44,38 @@ export default function NotePage() {
   // 初始化數據
   useEffect(() => {
     (async () => {
-      // 先從後端載入，回填到本地 noteUtils 的 notes/subjects
-      await loadUserQuizAndNotes();
-
-      // ✅ 必須 await，否則 notes/subjects 會是 Promise
-      const notesData = await getNotes();
-      const subjectsData = await getSubjects();
-      const subscriptionStatus = localStorage.getItem("isPlusSubscribed");
-      setNotes(notesData);
-      setSubjects(subjectsData);
-      setIsPlusSubscribed(subscriptionStatus === "true");
-
-      if (subjectsData.length > 0) {
-        if (!subjectsData.includes(currentSubject)) {
-          setCurrentSubject(subjectsData[0]);
+      try {
+        // 先從後端載入，回填到本地 noteUtils 的 notes/subjects
+        const loadResult = await loadUserQuizAndNotes();
+        
+        if (!loadResult.success) {
+          console.error("載入筆記失敗:", loadResult.message);
+          safeAlert("載入筆記失敗，請重新整理頁面");
+          return;
         }
-      } else {
-        setCurrentSubject(""); // 沒有主題時重置為空字符串
+
+        // 從本地 noteUtils 獲取已處理的數據
+        const notesData = await getNotes();
+        const subjectsData = await getSubjects();
+        
+        console.log("載入的筆記數據:", notesData);
+        console.log("載入的主題數據:", subjectsData);
+        
+        const subscriptionStatus = localStorage.getItem("isPlusSubscribed");
+        setNotes(notesData);
+        setSubjects(subjectsData);
+        setIsPlusSubscribed(subscriptionStatus === "true");
+
+        if (subjectsData.length > 0) {
+          if (!subjectsData.includes(currentSubject)) {
+            setCurrentSubject(subjectsData[0]);
+          }
+        } else {
+          setCurrentSubject(""); // 沒有主題時重置為空字符串
+        }
+      } catch (error) {
+        console.error("初始化數據失敗:", error);
+        safeAlert("初始化數據失敗，請重新整理頁面");
       }
     })();
   }, []);
@@ -426,13 +441,36 @@ export default function NotePage() {
   };
 
   // 生成題目
-  const handleGenerateQuestions = (note) => {
+  const handleGenerateQuestions = async (note) => {
     if (!checkPlusSubscription()) {
       showUpgradeAlert();
       return;
     }
-    const questions = generateQuestions(note.content);
-    safeAlert(`已生成 ${questions.length} 道題目！`);
+
+    try {
+      // 顯示生成中的提示
+      safeAlert("正在分析筆記內容，完成後將跳轉到遊戲頁面...");
+      
+      // 調用AI生成主題（傳遞筆記內容和標題）
+      const result = await generateQuestions(note.content, note.title);
+      
+      if (result.success && result.topic) {
+        // 將生成的主題存儲到sessionStorage，供homegame頁面使用
+        sessionStorage.setItem("generatedTopic", result.topic);
+        sessionStorage.setItem("generatedTopicSource", "note");
+        sessionStorage.setItem("generatedTopicNoteId", note.id);
+        
+        // 直接跳轉到homegame頁面
+        window.location.href = "/homegame";
+        
+      } else {
+        safeAlert(`❌ 生成主題失敗：${result.message}`);
+      }
+      
+    } catch (error) {
+      console.error("生成主題時發生錯誤:", error);
+      safeAlert("❌ 生成主題失敗，請稍後再試");
+    }
   };
 
   // 切換動作欄

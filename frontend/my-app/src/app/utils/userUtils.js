@@ -9,7 +9,7 @@ export async function getUserFamiliarityFromAPI() {
             return [];
         }
 
-        const res = await fetch("http://127.0.0.1:8000/api/user_quiz_and_notes/", {
+        const res = await fetch("http://127.0.0.1:8000/api/familiarity/", {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -24,12 +24,15 @@ export async function getUserFamiliarityFromAPI() {
 
         const data = await res.json();
 
-        // 從 favorite_quiz_topics 中提取熟悉度數據
-        const familiarityData = Array.isArray(data?.favorite_quiz_topics)
-            ? data.favorite_quiz_topics.map((quiz) => ({
-                name: quiz.quiz_topic || "未命名主題",
-                familiarity: quiz.familiarity ?? 0, // 如果 API 未提供熟悉度則為 0
-                quizId: quiz.id
+        // 調整資料格式
+        const familiarityData = Array.isArray(data)
+            ? data.map((item) => ({
+            name: item.quiz_topic?.quiz_topic.length > 8  // 如果主題名稱超過8個字符，則截斷並添加省略號+
+            
+                ? item.quiz_topic.quiz_topic.slice(0, 8) + "..." 
+                : item.quiz_topic?.quiz_topic || "未命名主題",
+            familiarity: item.familiarity ?? 0, // 如果 API 未提供熟悉度則為 0
+            quizId: item.quiz_topic?.id ?? null
             }))
             : [];
 
@@ -64,7 +67,7 @@ export async function submitUserAnswers(updates) {
             return null;
         }
 
-        const res = await fetch("http://127.0.0.1:8000/api/submit_answer/", {
+        const res = await fetch("http://127.0.0.1:8000/api/submit_answer/", { // 更新 API URL
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -79,16 +82,6 @@ export async function submitUserAnswers(updates) {
         }
 
         const data = await res.json();
-
-        // 後端回傳範例：
-        // {
-        //   "familiarity": 3.0,
-        //   "quiz_topic_id": 52,
-        //   "difficulty_level": "beginner",
-        //   "difficulty_cap": 30.0,
-        //   "already_reached_cap": false,
-        //   "updated": true
-        // }
 
         return {
             familiarity: data.familiarity ?? 0,
@@ -123,4 +116,4 @@ export function changePassword(oldPassword, newPassword) {
     
     // 模擬成功
     return { success: true, message: '密碼更改成功！' };
-} 
+}

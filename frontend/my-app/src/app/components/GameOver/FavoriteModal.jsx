@@ -123,10 +123,34 @@ export default function FavoriteModal({
       console.warn("獲取主題ID失敗:", error);
     }
 
-    // 如果找不到主題ID，使用題目ID作為備用
+    // 如果找不到主題ID，先创建主题
     if (!topicId) {
-      topicId = questionData.id;
+      try {
+        const createRes = await fetch("http://127.0.0.1:8000/api/create_quiz/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ quiz_topic: currentSubject }),
+        });
+        
+        if (createRes.ok) {
+          const newTopic = await createRes.json();
+          topicId = newTopic.quiz_topic_id;
+        } else {
+          throw new Error("创建主题失败");
+        }
+      } catch (error) {
+        console.error("创建主题失败:", error);
+        throw new Error(`无法创建主题「${currentSubject}」`);
+      }
     }
+
+    // 移除这个备用逻辑，因为现在topicId一定有值
+    // if (!topicId) {
+    //   topicId = questionData.id;
+    // }
 
     const payload = {
       user_id: Number(userId),
@@ -163,16 +187,16 @@ export default function FavoriteModal({
     }
 
     try {
-      // 註解掉後端收藏系統調用，避免重複創建記錄
-      // try {
-      //   const result = await sendFavoriteToBackend();
-      //   if (result?.message) {
-      //     console.log("收藏狀態更新成功:", result.message);
-      //   }
-      // } catch (err) {
-      //   console.warn("收藏狀態更新失敗:", err.message);
-      //   // 不阻擋筆記創建流程
-      // }
+      // 先標記題目為收藏狀態（後端收藏系統）
+      try {
+        const result = await sendFavoriteToBackend();
+        if (result?.message) {
+          console.log("收藏狀態更新成功:", result.message);
+        }
+      } catch (err) {
+        console.warn("收藏狀態更新失敗:", err.message);
+        // 不阻擋筆記創建流程
+      }
 
       if (currentNoteId === "add_note" || currentNoteId === null) {
         // 新增筆記
@@ -190,9 +214,10 @@ export default function FavoriteModal({
           await window.addNoteToSystem(newNote);
           onShowCustomAlert(`題目已收藏到「${currentSubject}」主題！`);
         }
-      } else {
-        // 添加到現有筆記
-        const targetNote = Array.isArray(notes) ? notes.find((note) => note.id === currentNoteId) : null;
+              } else {
+          // 添加到現有筆記
+          // ✅ 使用 filteredNotes 而不是 notes，确保数据一致
+          const targetNote = Array.isArray(filteredNotes) ? filteredNotes.find((note) => note.id === currentNoteId) : null;
 
         if (targetNote) {
           // 確保 targetNote.content 存在，避免 undefined 問題

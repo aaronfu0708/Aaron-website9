@@ -10,8 +10,7 @@ export default function ResultsCard({ styles, quiz, stats }) {
           <p className={styles["results-summary"]}>
             答對題數{stats?.correct ?? 0}/{stats?.total ?? 0}
             <br />
-            {/* 熟悉度需再修改 */}
-            熟悉度：{(stats?.accuracy ?? 0).toFixed ? stats.accuracy.toFixed(1) : stats?.accuracy ?? 0}%
+            正確率：{(stats?.accuracy ?? 0).toFixed ? stats.accuracy.toFixed(1) : stats?.accuracy ?? 0}%
           </p>
         </div>
       </div>
