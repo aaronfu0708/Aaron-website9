@@ -75,21 +75,20 @@ services:
     networks:
       - quiz-network
 
-  # Nginx 反向代理 (暫時註釋)
-  # nginx:
-  #   image: nginx:alpine
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf
-  #     - ./ssl:/etc/nginx/ssl
-  #   depends_on:
-  #     - frontend
-  #     - django
-  #     - ml-service
-  #   networks:
-  #     - quiz-network
+  # Nginx 反向代理 - 統一入口點
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - django
+      - ml-service
+    networks:
+      - quiz-network
 
 volumes:
   postgres_data:
