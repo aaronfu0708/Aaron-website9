@@ -310,7 +310,9 @@ export default function UserPage() {
                   {topics && topics.length > 0 ? (
                     topics.map((topic, index) => (
                       <div key={index} className={styles.topicItem}>
-                        <h2 className={styles.topicTitle}>{topic.name}</h2>
+                        <div className={styles.topicHeader}>
+                          <h2 className={styles.topicTitle}>{topic.name}</h2>
+                        </div>
                         <div className={styles.progressContainer}>
                           <span className={styles.progressLabel}>熟悉度：</span>
                           <div className={styles.progressBar}>
