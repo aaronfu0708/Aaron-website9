@@ -1,7 +1,7 @@
 import requests
 from django.shortcuts import render , get_object_or_404
 from django.http import JsonResponse
-from .serializers import UserFavoriteSerializer, TopicSerializer,  NoteSerializer, ChatSerializer, AiPromptSerializer ,AiInteractionSerializer ,QuizSerializer , UserFamiliaritySerializer, DifficultyLevelsSerializer , QuizSimplifiedSerializer ,UserFamiliaritySimplifiedSerializer , NoteSimplifiedSerializer , TopicSimplifiedSerializer , AddFavoriteTopicSerializer
+from .serializers import UserFavoriteSerializer, TopicSerializer,  NoteSerializer, ChatSerializer, AiPromptSerializer ,AiInteractionSerializer ,QuizSerializer, UserFamiliaritySerializer, DifficultyLevelsSerializer , QuizSimplifiedSerializer ,UserFamiliaritySimplifiedSerializer , NoteSimplifiedSerializer , TopicSimplifiedSerializer , AddFavoriteTopicSerializer
 from .models import UserFavorite, Topic,  Note, Chat, AiPrompt,AiInteraction , Quiz , UserFamiliarity, DifficultyLevels
 from myapps.Authorization.serializers import UserSerializer
 from myapps.Authorization.models import User
@@ -50,19 +50,17 @@ class QuizViewSet(APIView):
             user_instance = None
             
             # 如果有 user_id，取得 User 實例
-            if user_id:
-                from myapps.Authorization.models import User
-                try:
-                    user_instance = User.objects.get(id=user_id)
-                except User.DoesNotExist:
-                    return Response({
-                        'error': f'User with ID {user_id} not found'
-                    }, status=400)
+            try:
+                user_instance = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({
+                    'error': f'User with ID {user_id} not found'
+                }, status=400)
             
             # 返回結果 寫回資料庫
             # 先判斷 quiz_topic 是否有未軟刪除的 Quiz，有則不再新建
             quiz_topic_name = result.get('quiz_topic')
-            quiz = Quiz.objects.filter(quiz_topic=quiz_topic_name, user_id=user_instance.id, deleted_at__isnull=True).first()
+            quiz = Quiz.objects.filter(quiz_topic=quiz_topic_name, user_id=user_id, deleted_at__isnull=True).first()
             if quiz:
                 print(f"Found existing Quiz: {quiz.quiz_topic} (ID: {quiz.id}) for user: {user_instance}")
             else:
@@ -71,6 +69,17 @@ class QuizViewSet(APIView):
                     user=user_instance
                 )
                 print(f"Created new Quiz: {quiz.quiz_topic} (ID: {quiz.id}) for user: {user_instance}")
+                
+                # 自動添加到用戶收藏
+                try:
+                    UserFavorite.objects.create(
+                        user=user_instance,
+                        quiz=quiz
+                    )
+                    print(f"✅ 自動添加Quiz到用戶收藏: {quiz.quiz_topic}")
+                except Exception as e:
+                    print(f"⚠️ 添加收藏失敗: {str(e)}")
+                    # 不阻止主流程繼續
             
             # 然後創建 Topic，並關聯到 Quiz
             topics = []

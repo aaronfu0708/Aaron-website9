@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .services import update_familiarity_weighted_average
 from .models import DifficultyLevels , UserFamiliarity , Quiz
-from .serializers import UserFamiliaritySerializer ,QuizSimplifiedSerializer
+from .serializers import UserFamiliaritySerializer ,QuizSimplifiedSerializer ,QuizSerializer
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 
@@ -109,26 +109,19 @@ class SubmitAttemptView(APIView):
 
         try:
             # 獲取用戶的所有熟悉度記錄，並使用 select_related 或 prefetch_related 優化查詢
-            familiarities = UserFamiliarity.objects.filter(user=user).select_related('quiz_topic')
-            
+            familiarities = UserFamiliarity.objects.filter(user=user, quiz_topic__deleted_at__isnull=True).select_related('quiz_topic')
             # 將結果序列化
             data = []
             for uf in familiarities:
                 # 檢查 quiz_topic 是否存在
-                if hasattr(uf, 'quiz_topic') and uf.quiz_topic:
+                if hasattr(uf, 'quiz_topic') and uf.quiz_topic :
                     quiz_topic_data = QuizSimplifiedSerializer(uf.quiz_topic).data
                 else:
-                    # 如果沒有 quiz_topic 關聯，手動查詢並處理例外
-                    try:
-                        quiz_topic = Quiz.objects.get(id=uf.quiz_topic_id)
-                        quiz_topic_data = QuizSimplifiedSerializer(quiz_topic).data
-                    except Quiz.DoesNotExist:
-                        # 如果 Quiz 不存在，跳過這筆記錄或提供預設值
-                        quiz_topic_data = {
-                            "id": uf.quiz_topic_id,
-                            "title": "已刪除的測驗",
-                            "description": "此測驗已不存在"
-                        }
+                    quiz_topic_data = {
+                        "id": uf.quiz_topic_id,
+                        "title": "已刪除的測驗",
+                        "description": "此測驗已不存在"
+                    }
                 
                 data.append({
                     "quiz_topic": quiz_topic_data,
