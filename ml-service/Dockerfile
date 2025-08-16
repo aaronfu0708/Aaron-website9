@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # 設置工作目錄
 WORKDIR /app
@@ -30,4 +30,4 @@ ENV FLASK_ENV=production
 EXPOSE 5000
 
 # 啟動命令
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "topic_apps:app"]

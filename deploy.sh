@@ -8,7 +8,13 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker 未安裝，請先安裝 Docker"
+    exit 1
+fi
+
+# 檢查 Docker Compose 是否可用
+if ! docker compose version &> /dev/null; then
     echo "❌ Docker Compose 未安裝，請先安裝 Docker Compose"
     exit 1
 fi
@@ -20,15 +26,15 @@ mkdir -p logs
 
 # 停止現有服務
 echo "🛑 停止現有服務..."
-docker-compose down
+docker compose down
 
 # 清理舊的構建
 echo "🧹 清理舊的構建..."
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # 啟動服務
 echo "🚀 啟動服務..."
-docker-compose up -d
+docker compose up -d
 
 # 等待服務啟動
 echo "⏳ 等待服務啟動..."
@@ -36,7 +42,7 @@ sleep 30
 
 # 檢查服務狀態
 echo "🔍 檢查服務狀態..."
-docker-compose ps
+docker compose ps
 
 # 檢查健康狀態
 echo "🏥 檢查服務健康狀態..."

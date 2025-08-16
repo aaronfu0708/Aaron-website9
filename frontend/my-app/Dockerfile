@@ -1,5 +1,5 @@
-# 構建階段
-FROM node:18-alpine AS builder
+# 使用 Node.js 直接運行
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -7,25 +7,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安裝依賴
-RUN npm ci --only=production
+RUN npm install
 
 # 複製源碼
 COPY . .
 
-# 構建應用
-RUN npm run build
-
-# 生產階段
-FROM nginx:alpine
-
-# 複製構建結果到 Nginx
-COPY --from=builder /app/build /usr/share/nginx/html
-
-# 複製 Nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
 # 暴露端口
 EXPOSE 3000
 
-# 啟動 Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# 啟動 Next.js 開發服務器
+CMD ["npm", "run", "dev"]

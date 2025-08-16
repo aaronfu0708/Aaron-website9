@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # 設置工作目錄
 WORKDIR /app
@@ -7,6 +7,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
+    pkg-config \
+    default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 複製依賴文件
@@ -32,5 +34,5 @@ ENV PYTHONUNBUFFERED=1
 # 暴露端口
 EXPOSE 8000
 
-# 啟動命令
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "main:app"]
+# 啟動命令 - 使用 Django 開發服務器
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
