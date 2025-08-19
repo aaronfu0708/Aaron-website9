@@ -8,6 +8,7 @@ import styles from "../styles/LoginPage.module.css";
 import { initSplineViewer, optimizeSplineLoading } from "../utils/spline";
 import { safeAlert } from "../utils/dialogs";
 import { usePageTransition } from "../components/PageTransition";
+import { API_ENDPOINTS } from "../utils/apiConfig";
 
 
 function LoginPageContent() {
@@ -223,7 +224,7 @@ function LoginPageContent() {
       const preloadUserData = async () => {
         try {
           const data = await smartApiCall(
-            "http://127.0.0.1:8000/api/user_quiz_and_notes/",
+            API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES,
             {
               method: "GET",
               headers: {
@@ -255,7 +256,7 @@ function LoginPageContent() {
     
     try {
       const res = await smartApiCall(
-        "http://127.0.0.1:8000/forgot-password/",
+        API_ENDPOINTS.BACKEND.FORGOT_PASSWORD,
         {
           method: "POST",
           headers: {
@@ -293,7 +294,7 @@ function LoginPageContent() {
     try {
       // 樂觀更新：立即開始頁面過渡動畫
       const loginPromise = smartApiCall(
-        "http://127.0.0.1:8000/login/",
+        API_ENDPOINTS.BACKEND.LOGIN,
         {
           method: "POST",
           headers: {
@@ -312,7 +313,7 @@ function LoginPageContent() {
         (async () => {
           try {
             const userData = await smartApiCall(
-              "http://127.0.0.1:8000/api/user_quiz_and_notes/",
+              API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES,
               {
                 method: "GET",
                 headers: {
@@ -357,7 +358,7 @@ function LoginPageContent() {
     try {
       // 樂觀更新：立即顯示註冊成功訊息
       const signupPromise = smartApiCall(
-        "http://127.0.0.1:8000/register/",
+        API_ENDPOINTS.BACKEND.REGISTER,
         {
           method: "POST",
           headers: {
@@ -381,7 +382,7 @@ function LoginPageContent() {
           try {
             // 預加載登入 API 的相關資源
             await smartApiCall(
-              "http://127.0.0.1:8000/login/",
+              API_ENDPOINTS.BACKEND.LOGIN,
               {
                 method: "HEAD",
                 headers: { "Content-Type": "application/json" }

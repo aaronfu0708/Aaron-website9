@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { API_ENDPOINTS } from '../utils/apiConfig';
 
 export default function ResetPasswordPage() {
   const params = useParams();
@@ -32,7 +33,7 @@ export default function ResetPasswordPage() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/reset-password/', {
+      const response = await fetch(API_ENDPOINTS.BACKEND.RESET_PASSWORD, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

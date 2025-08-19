@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { API_ENDPOINTS } from "../utils/apiConfig";
 import Image from "next/image";
 import Header from "../components/Header";
 import Menu from "../components/Menu";
@@ -152,7 +153,7 @@ export default function UserPage() {
       }
 
       try {
-        const res = await fetch("http://127.0.0.1:8000/reset-password/", {
+        const res = await fetch("API_ENDPOINTS.BACKEND.RESET_PASSWORD", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -189,7 +190,7 @@ export default function UserPage() {
       loadingAlert = safeAlert("正在前往付款頁面，請稍候...");
       
       // 1) 直接向後端索取 HTML（避免帶 Content-Type: application/json 造成預檢）
-      const res = await fetch("http://localhost:8000/ecpay/", {
+              const res = await fetch(API_ENDPOINTS.BACKEND.ECPAY, {
         method: "POST",
         headers: {
           // 接受 HTML；Authorization 視你的後端需求保留
@@ -290,7 +291,7 @@ export default function UserPage() {
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/users/${userId}`, {
+      const res = await fetch(`API_ENDPOINTS.BACKEND.USERS${userId}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -340,7 +341,7 @@ export default function UserPage() {
         }
         if (!mt || mt.length < 20) return;
         const res = await fetch(
-          `http://127.0.0.1:8000/payment-status/?merchant_trade_no=${encodeURIComponent(mt)}`,
+          `API_ENDPOINTS.BACKEND.PAYMENT_STATUS?merchant_trade_no=${encodeURIComponent(mt)}`,
           {
             method: "GET",
             headers: { Authorization: `Bearer ${token}` },

@@ -2,6 +2,7 @@
 // 解析內容收藏模態框組件 - 允許用戶將 AI 解析內容收藏到筆記本中
 
 import { useState, useEffect } from "react";
+import { API_ENDPOINTS } from "../utils/apiConfig";
 import SubjectSelector from "./SubjectSelector";
 import NoteSelector from "./NoteSelector";
 import ContentEditor from "./ContentEditor";
@@ -164,7 +165,7 @@ export default function AnalysisFavoriteModal({
         setIsLoadingOptions(true);
         const token = localStorage.getItem("token");
         const res = await fetch(
-          "http://127.0.0.1:8000/api/user_quiz_and_notes/",
+          "API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES",
           {
             method: "GET",
             headers: {
@@ -263,7 +264,7 @@ ${content}`;
           // 靜默更新筆記，不等待結果
           try {
             const token = localStorage.getItem("token");
-            fetch(`http://127.0.0.1:8000/api/notes/${currentNoteId}/`, {
+            fetch(`API_ENDPOINTS.BACKEND.NOTES${currentNoteId}/`, {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",

@@ -2,6 +2,7 @@
 // AI 解析側邊欄組件 - 提供題目解析對話介面，支援與 AI 互動討論
 
 import { useState, useEffect } from "react";
+import { API_ENDPOINTS } from "../utils/apiConfig";
 import Image from "next/image";
 
 export default function AnalysisOverlay({
@@ -64,7 +65,7 @@ export default function AnalysisOverlay({
     setIsLoading(true);
 
     try {
-      const API_URL = "http://127.0.0.1:8000/api/chat/"; // 依你的後端實際路徑調整
+      const API_URL = "API_ENDPOINTS.BACKEND.CHAT"; // 依你的後端實際路徑調整
       const token = localStorage.getItem("token");
       const quizData = JSON.parse(sessionStorage.getItem("quizData") || "{}");
       const user = quizData.quiz.user.username;

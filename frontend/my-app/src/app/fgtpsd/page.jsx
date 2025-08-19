@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_ENDPOINTS } from "../utils/apiConfig";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "../components/Header";
@@ -42,7 +43,7 @@ export default function ForgotPasswordPage() {
     const uid = urlParams.get("uid");
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/reset-password-from-email/",
+        "API_ENDPOINTS.BACKEND.RESET_PASSWORD_FROM_EMAIL",
         {
           method: "POST",
           headers: {
