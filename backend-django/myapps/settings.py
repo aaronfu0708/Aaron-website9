@@ -33,8 +33,17 @@ DEBUG = os.getenv('DJANGO_DEBUG', '0') == '1'
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'aaron-website9-backend.onrender.com,aaron-website9.vercel.app,localhost,127.0.0.1').split(',')
 
 # 確保生產環境域名始終被包含
-if 'aaron-website9-backend.onrender.com' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('aaron-website9-backend.onrender.com')
+PRODUCTION_HOSTS = [
+    'aaron-website9-backend.onrender.com',  # 後端域名
+    'aaron-website9.vercel.app',  # 前端域名
+    'aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app',
+    'aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app',
+    'aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app'
+]
+
+for host in PRODUCTION_HOSTS:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
 
 
@@ -178,7 +187,6 @@ SIMPLE_JWT = {
 # CORS 設置 - 允許跨域請求
 # 根據環境變數設定允許的來源
 CORS_ALLOWED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")
-CORS_ALLOW_CREDENTIALS = True
 
 # 確保生產環境前端域名始終被包含
 PRODUCTION_FRONTEND_DOMAINS = [
@@ -192,9 +200,11 @@ for domain in PRODUCTION_FRONTEND_DOMAINS:
     if domain not in CORS_ALLOWED_ORIGINS:
         CORS_ALLOWED_ORIGINS.append(domain)
 
+CORS_ALLOW_CREDENTIALS = True
+
 # 如果沒有設定環境變數，則允許所有來源（僅用於開發）
 if not os.getenv("NEXT_PUBLIC_ORIGIN"):
-    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_ALL_ORIGINS = False  # 生產環境不允許所有來源
 
 # 允許所有Vercel預覽域名
 CORS_ALLOWED_ORIGIN_REGEXES = [

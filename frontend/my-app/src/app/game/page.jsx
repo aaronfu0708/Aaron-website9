@@ -125,6 +125,16 @@ const Game = () => {
 
       const token = localStorage.getItem("token");
 
+      // 添加調試資訊
+      console.log("=== 提交答案調試資訊 ===");
+      console.log("API端點:", API_ENDPOINTS.BACKEND.SUBMIT_ANSWER);
+      console.log("請求標頭:", {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token ? token.substring(0, 20) + '...' : 'No token'}`
+      });
+      console.log("請求內容:", payload);
+      console.log("==========================");
+
       // POST 到後端
       const res = await fetch(API_ENDPOINTS.BACKEND.SUBMIT_ANSWER, {
         method: "POST",
@@ -137,7 +147,14 @@ const Game = () => {
 
       // 錯誤處理：如果API調用失敗，不繼續執行
       if (!res.ok) {
-        console.error("提交答案失敗：", res.status, await res.text());
+        const errorText = await res.text();
+        console.error("=== 提交答案失敗 ===");
+        console.error("狀態碼:", res.status);
+        console.error("狀態文字:", res.statusText);
+        console.error("回應標頭:", Object.fromEntries(res.headers.entries()));
+        console.error("回應內容:", errorText);
+        console.error("=====================");
+        
         setShowDecryption(false);
         setIsProcessing(false);
         return; // 直接返回，不繼續執行
