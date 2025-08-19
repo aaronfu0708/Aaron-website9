@@ -181,7 +181,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 # 確保生產環境前端域名始終被包含
 PRODUCTION_FRONTEND_DOMAINS = [
-    'https://aaron-website9.vercel.app',
+    'https://aaron-website9.vercel.app',  # 主要固定域名
     'https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app',
     'https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app',
     'https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app'
