@@ -1,8 +1,32 @@
 from django.urls import path
+from django.http import JsonResponse
 from .views import QuizViewSet , TopicDetailViewSet, QuizTopicsViewSet , AddFavoriteViewSet , ChatViewSet , ChatContentToNoteView,NoteEdit , NoteListView , CreateQuizTopicView ,UserQuizView ,RetestView ,ParseAnswerView ,UsersQuizAndNote , SubmitAnswerView , NoteEditQuizTopicView
 from .soft_delete_views import SoftDeleteManagementViewSet
 from .familiarity_views import SubmitAttemptView
+
+# API根端點
+def api_root(request):
+    """API根端點，顯示可用的API端點"""
+    return JsonResponse({
+        "message": "Django API 服務",
+        "version": "v1",
+        "endpoints": {
+            "quiz": "/api/quiz/",
+            "topics": "/api/topic/<id>/",
+            "notes": "/api/notes/",
+            "chat": "/api/chat/",
+            "user_quiz_and_notes": "/api/user_quiz_and_notes/",
+            "submit_answer": "/api/submit_answer/",
+            "familiarity": "/api/familiarity/",
+            "create_quiz": "/api/create_quiz/",
+            "add_favorite": "/api/add-favorite/"
+        }
+    })
+
 urlpatterns = [
+    # API根端點
+    path('', api_root, name='api-root'),
+    
     # 創建題目和獲取所有題目
     path('quiz/', QuizViewSet.as_view(), name='quiz'),
     

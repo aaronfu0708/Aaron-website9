@@ -169,13 +169,16 @@ SIMPLE_JWT = {
 }
 
 # CORS 設置 - 允許跨域請求
-CORS_ALLOW_ALL_ORIGINS = True  # 開發環境使用，生產環境應該設定特定的 origins
+# 根據環境變數設定允許的來源
+CORS_ALLOWED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 CORS_ALLOW_CREDENTIALS = True
 
-# CSRF 設置 - 對 API 端點豁免 CSRF 檢查
+# 如果沒有設定環境變數，則允許所有來源（僅用於開發）
+if not os.getenv("NEXT_PUBLIC_ORIGIN"):
+    CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "").split(",")
-CSRF_TRUSTED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "").split(",")
+# CSRF 設置 - 對 API 端點豁免 CSRF 檢查
+CSRF_TRUSTED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 
 # 對 API 路徑豁免 CSRF
 CSRF_EXEMPT_URLS = [
