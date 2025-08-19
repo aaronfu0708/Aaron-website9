@@ -428,7 +428,7 @@ export async function deleteSubject(subjectName, subjectId = null) {
     }
 
     // 執行刪除操作
-    const res = await fetch(`API_ENDPOINTS.BACKEND.QUIZ${targetSubjectId}/soft-delete/`, {
+    const res = await fetch(`${API_ENDPOINTS.BACKEND.QUIZ}${targetSubjectId}/soft-delete/`, {
       method: "DELETE", // 改為DELETE方法
       headers: {
         "Content-Type": "application/json",
@@ -478,7 +478,7 @@ export async function deleteSubjectFast(subjectName) {
     }
 
     // 執行刪除操作
-    const deleteRes = await fetch(`API_ENDPOINTS.BACKEND.QUIZ${targetSubject.id}/soft-delete/`, {
+    const deleteRes = await fetch(`${API_ENDPOINTS.BACKEND.QUIZ}${targetSubject.id}/soft-delete/`, {
       method: "DELETE", // 改為DELETE方法
       headers: {
         "Content-Type": "application/json",
@@ -530,8 +530,8 @@ export async function deleteSubjectUltraFast(subjectName) {
           return { success: false, message: `找不到主題「${subjectName}」` };
         }
 
-        // 執行刪除操作
-        const deleteRes = await fetch(`API_ENDPOINTS.BACKEND.QUIZ${targetSubject.id}/soft-delete/`, {
+            // 執行刪除操作
+    const deleteRes = await fetch(`${API_ENDPOINTS.BACKEND.QUIZ}${targetSubject.id}/soft-delete/`, {
           method: "DELETE", // 改為DELETE方法
           headers: {
             "Content-Type": "application/json",
@@ -597,7 +597,7 @@ export async function deleteSubjectSmart(subjectName) {
     }
 
     // 執行刪除操作 - 使用DELETE方法，不是POST方法
-    const deleteRes = await fetch(`API_ENDPOINTS.BACKEND.QUIZ${targetSubjectId}/soft-delete/`, {
+    const deleteRes = await fetch(`${API_ENDPOINTS.BACKEND.QUIZ}${targetSubjectId}/soft-delete/`, {
       method: "DELETE", // 改為DELETE方法
       headers: {
         "Content-Type": "application/json",
