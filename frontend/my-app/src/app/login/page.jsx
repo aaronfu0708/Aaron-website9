@@ -291,6 +291,17 @@ function LoginPageContent() {
     
     setIsLoggingIn(true);
 
+    // 添加調試信息
+    console.log("=== 登入調試信息 ===");
+    console.log("API端點:", API_ENDPOINTS.BACKEND.LOGIN);
+    console.log("環境變數:", {
+      BACKEND_API_URL: process.env.NEXT_PUBLIC_BACKEND_API_URL,
+      ML_SERVICE_URL: process.env.NEXT_PUBLIC_ML_SERVICE_URL,
+      FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL
+    });
+    console.log("請求數據:", { email, password });
+    console.log("==========================");
+
     try {
       // 樂觀更新：立即開始頁面過渡動畫
       const loginPromise = smartApiCall(
@@ -340,6 +351,13 @@ function LoginPageContent() {
       navigateWithTransition('/homegame', 'right');
       
     } catch (err) {
+      // 添加錯誤調試信息
+      console.error("=== 登入錯誤調試信息 ===");
+      console.error("錯誤對象:", err);
+      console.error("錯誤訊息:", err.message);
+      console.error("錯誤堆疊:", err.stack);
+      console.error("==========================");
+      
       // 如果登入失敗，顯示錯誤訊息
       safeAlert("登入失敗，請確認帳號密碼");
     } finally {
