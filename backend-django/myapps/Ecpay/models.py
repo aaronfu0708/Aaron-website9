@@ -16,6 +16,10 @@ class Order(models.Model):
     user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=32, choices=[('pending', 'Pending'), ('completed', 'Completed'), ('failed', 'Failed')], default='pending')
+    # 綠界商店自訂單號 (傳給 ECPay 的 MerchantTradeNo)，用來在回傳時關聯訂單
+    merchant_trade_no = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    # 付款完成時間（選擇性）
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # is_paid = models.BooleanField(default=False)

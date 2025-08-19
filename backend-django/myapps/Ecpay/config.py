@@ -18,13 +18,13 @@ class ECPayConfig:
     # API 網址（測試/正式）
     if TEST_MODE:
         ACTION_URL = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5'
-        CLIENT_BACK_URL = f'{REACT_BASE_URL}/user'  # 前端返回頁面，指向特定路由
+        # CLIENT_BACK_URL = f'{REACT_BASE_URL}/user'  # 前端返回頁面，指向特定路由
     else:
         ACTION_URL = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
-        CLIENT_BACK_URL = f'{REACT_BASE_URL}/user'
+        # CLIENT_BACK_URL = f'{REACT_BASE_URL}/user'
 
     # 回傳網址（ECPay server -> your server）
-    RETURN_URL = f'{DJANGO_BASE_URL}/ECpay-return/'
+    RETURN_URL = 'http://localhost:8000/ECpay-return/'
 
 config = ECPayConfig()
 
