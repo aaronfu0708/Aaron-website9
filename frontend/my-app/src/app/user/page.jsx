@@ -320,7 +320,57 @@ export default function UserPage() {
     }
   };
 
-  // 從API獲取用戶主題熟悉度 - 優化版本
+  // 回到 /user 後，基於網址參數檢查綠界付款狀態（最小變更）
+  const checkPaymentStatus = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token || typeof window === "undefined") return;
+
+      const params = new URLSearchParams(window.location.search);
+        let mt = params.get("merchant_trade_no") || params.get("MerchantTradeNo");
+        if (!mt) return;
+        // 修正格式：['O2025081903284257153'] -> O2025081903284257153
+        if (/^\[.*\]$/.test(mt)) {
+          try {
+            mt = JSON.parse(mt.replace(/'/g, '"'));
+            if (Array.isArray(mt)) mt = mt[0];
+          } catch {
+            mt = mt.replace(/\[|'|\]/g, "");
+          }
+        }
+        if (!mt || mt.length < 20) return;
+        const res = await fetch(
+          `http://127.0.0.1:8000/payment-status/?merchant_trade_no=${encodeURIComponent(mt)}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.status === "completed") {
+          localStorage.setItem("is_paid", "true");
+          setIsPlusSubscribed(true);
+        }
+    } catch (e) {
+      console.error("payment-status 檢查失敗:", e);
+    }
+  };
+
+  // 初始化數據
+  useEffect(() => {
+    // 確保在客戶端渲染時才執行
+    if (typeof window !== "undefined") {
+      fetchUserDataFromAPI();
+      fetchUserTopicsFromAPI();
+      const subscriptionStatus = localStorage.getItem("is_paid");
+      setIsPlusSubscribed(subscriptionStatus === "true");
+  // 登回 USER 後立即以交易編號檢查一次付款狀態
+  checkPaymentStatus();
+    }
+  }, []);
+
+  // 從API獲取用戶主題熟悉度
   const fetchUserTopicsFromAPI = async () => {
     try {
       const userTopics = await getUserTopics();
