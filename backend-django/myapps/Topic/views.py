@@ -1025,7 +1025,9 @@ class SubmitAnswerView(APIView):
                     response = Response({
                         "message": f"Batch answers submitted successfully ({message})",
                         "total_questions": total_questions,
-                        "correct_answers": correct_answers
+                        "correct_answers": correct_answers,
+                        "familiarity": 0,  # 添加 familiarity 字段，設置為默認值
+                        "familiarity_api_response": 0  # 添加備用字段
                     }, status=201)
                     return add_cors_headers(response)
                 
@@ -1118,7 +1120,9 @@ class SubmitAnswerView(APIView):
                     return Response({
                         "message": f"Batch answers submitted successfully ({message})",
                         "total_questions": total_questions,
-                        "correct_answers": correct_answers
+                        "correct_answers": correct_answers,
+                        "familiarity": 0,  # 添加 familiarity 字段，設置為默認值
+                        "familiarity_api_response": 0  # 添加備用字段
                     }, status=201)
                 
                 print(f"=== 傳送到熟悉度 API 的資料 (List格式) ===")
