@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Header from "../components/Header";
@@ -9,7 +9,8 @@ import { initSplineViewer, optimizeSplineLoading } from "../utils/spline";
 import { safeAlert } from "../utils/dialogs";
 import { usePageTransition } from "../components/PageTransition";
 
-export default function LoginPage() {
+
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const [isLoginForm, setIsLoginForm] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -392,7 +393,7 @@ export default function LoginPage() {
             // 靜默處理錯誤，不影響用戶體驗
           }
         })()
-      ]);
+      );
 
       safeAlert("註冊成功，請登入");
       setIsLoginForm(true);
@@ -767,5 +768,14 @@ export default function LoginPage() {
         </div>
       )}
     </>
+  );
+}
+
+// 主组件，包装在 Suspense 中
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
