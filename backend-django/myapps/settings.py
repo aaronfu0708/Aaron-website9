@@ -176,14 +176,15 @@ SIMPLE_JWT = {
 
 # CORS 設置 - 允許跨域請求
 # 根據環境變數設定允許的來源
-CORS_ALLOWED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")
 CORS_ALLOW_CREDENTIALS = True
 
 # 確保生產環境前端域名始終被包含
 PRODUCTION_FRONTEND_DOMAINS = [
     'https://aaron-website9.vercel.app',
     'https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app',
-    'https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app'
+    'https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app',
+    'https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app'
 ]
 
 for domain in PRODUCTION_FRONTEND_DOMAINS:
@@ -194,8 +195,14 @@ for domain in PRODUCTION_FRONTEND_DOMAINS:
 if not os.getenv("NEXT_PUBLIC_ORIGIN"):
     CORS_ALLOW_ALL_ORIGINS = True
 
+# 允許所有Vercel預覽域名
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"https://aaron-website9-[a-zA-Z0-9]+-aaronfu0708s-projects\.vercel\.app",
+    r"https://aaron-website9\.vercel\.app",
+]
+
 # CSRF 設置 - 對 API 端點豁免 CSRF 檢查
-CSRF_TRUSTED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")
 
 # 確保生產環境前端域名始終被包含在 CSRF 信任列表中
 for domain in PRODUCTION_FRONTEND_DOMAINS:
