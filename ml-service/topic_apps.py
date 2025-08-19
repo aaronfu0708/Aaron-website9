@@ -13,10 +13,16 @@ from pathlib import Path
 # 載入 .env 檔案
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
-DJANGO_BASE_URL = os.getenv("DJANGO_BASE_URL", "http://localhost:8000")
+
+# 從環境變數獲取配置
+DJANGO_BASE_URL = os.getenv("DJANGO_BASE_URL", "https://aaron-website.onrender.com")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://aaron-website9.vercel.app")
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://aaron-website9.vercel.app,https://aaron-website.onrender.com").split(",")
+
 app = Flask(__name__)
-# 配置CORS，允許前端跨域調用
-CORS(app)
+
+# 配置CORS，允許前端和後端跨域調用
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 
 @app.route("/health", methods=["GET"])
@@ -1057,5 +1063,20 @@ def extract_key_words(content):
     return [word for word, freq in sorted_words[:3]]
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000 , host='0.0.0.0')  # 使用 Flask 啟動應用
+    if __name__ == "__main__":
+    # 從環境變數獲取配置，預設值為開發環境
+    debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
+    host = os.getenv("FLASK_HOST", "0.0.0.0")
+    port = int(os.getenv("FLASK_PORT", "5000"))
+    
+    print(f"=== ML服務啟動 ===")
+    print(f"環境: {'開發' if debug_mode else '生產'}")
+    print(f"主機: {host}")
+    print(f"端口: {port}")
+    print(f"允許的來源: {ALLOWED_ORIGINS}")
+    print(f"Django後端URL: {DJANGO_BASE_URL}")
+    print(f"前端URL: {FRONTEND_URL}")
+    
+    # 啟動Flask應用
+    app.run(debug=debug_mode, port=port, host=host)
 
