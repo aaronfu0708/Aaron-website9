@@ -747,7 +747,7 @@ export async function generateQuestions(noteContent, noteTitle = '') {
     }
 
     // 調用後端AI API生成主題
-    const res = await fetch("API_ENDPOINTS.ML_SERVICE.GENERATE_TOPIC_FROM_NOTE", {
+    const res = await fetch(API_ENDPOINTS.ML_SERVICE.GENERATE_TOPIC_FROM_NOTE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
