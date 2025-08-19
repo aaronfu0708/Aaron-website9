@@ -108,7 +108,7 @@ export default function FavoriteModal({
     // 獲取主題ID - 根據當前選擇的主題名稱找到對應的ID
     let topicId = null;
     try {
-      const subjectsRes = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+                const subjectsRes = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export default function FavoriteModal({
           throw new Error("主題名稱不能為空");
         }
 
-        const createRes = await fetch("API_ENDPOINTS.BACKEND.CREATE_QUIZ", {
+        const createRes = await fetch(API_ENDPOINTS.BACKEND.CREATE_QUIZ, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -182,7 +182,7 @@ export default function FavoriteModal({
       },
     };
 
-    const res = await fetch("API_ENDPOINTS.BACKEND.ADD_FAVORITE", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.ADD_FAVORITE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -250,7 +250,7 @@ ${questionContent}`;
           // 靜默更新筆記，不等待結果
           try {
             const token = localStorage.getItem("token");
-            fetch(`API_ENDPOINTS.BACKEND.NOTES${currentNoteId}/`, {
+            fetch(`${API_ENDPOINTS.BACKEND.NOTES}${currentNoteId}/`, {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",

@@ -160,7 +160,7 @@ export default function HomeGamePage() {
       // 第一步：先創建Quiz主題（如果不存在）
       let quizTopicId = null;
       try {
-        const createQuizRes = await fetch("API_ENDPOINTS.BACKEND.CREATE_QUIZ", {
+        const createQuizRes = await fetch(API_ENDPOINTS.BACKEND.CREATE_QUIZ, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -186,7 +186,7 @@ export default function HomeGamePage() {
           
         } else if (createQuizRes.status === 400) {
           // 主題已存在，獲取現有主題ID
-          const subjectsRes = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+          const subjectsRes = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -209,7 +209,7 @@ export default function HomeGamePage() {
       }
 
       // 第二步：生成題目
-      const res = await fetch("API_ENDPOINTS.BACKEND.QUIZ", {
+      const res = await fetch(API_ENDPOINTS.BACKEND.QUIZ, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

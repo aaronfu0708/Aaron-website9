@@ -126,7 +126,7 @@ const Game = () => {
       const token = localStorage.getItem("token");
 
       // POST 到後端
-      const res = await fetch("API_ENDPOINTS.BACKEND.SUBMIT_ANSWER", {
+      const res = await fetch(API_ENDPOINTS.BACKEND.SUBMIT_ANSWER, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

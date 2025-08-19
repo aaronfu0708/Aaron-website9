@@ -65,7 +65,7 @@ export default function AnalysisOverlay({
     setIsLoading(true);
 
     try {
-      const API_URL = "API_ENDPOINTS.BACKEND.CHAT"; // 依你的後端實際路徑調整
+      const API_URL = API_ENDPOINTS.BACKEND.CHAT; // 依你的後端實際路徑調整
       const token = localStorage.getItem("token");
       const quizData = JSON.parse(sessionStorage.getItem("quizData") || "{}");
       const user = quizData.quiz.user.username;

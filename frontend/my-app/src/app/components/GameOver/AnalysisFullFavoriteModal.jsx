@@ -169,7 +169,7 @@ export default function AnalysisFullFavoriteModal({
         setIsLoadingOptions(true);
         const token = localStorage.getItem("token");
         const res = await fetch(
-          "API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES",
+          API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES,
           {
             method: "GET",
             headers: {
@@ -265,7 +265,7 @@ ${content}`;
           // 靜默更新筆記，不等待結果
           try {
             const token = localStorage.getItem("token");
-            fetch(`API_ENDPOINTS.BACKEND.NOTES${currentNoteId}/`, {
+            fetch(`${API_ENDPOINTS.BACKEND.NOTES}${currentNoteId}/`, {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",

@@ -153,7 +153,7 @@ export default function UserPage() {
       }
 
       try {
-        const res = await fetch("API_ENDPOINTS.BACKEND.RESET_PASSWORD", {
+        const res = await fetch(API_ENDPOINTS.BACKEND.RESET_PASSWORD, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -291,7 +291,7 @@ export default function UserPage() {
     }
 
     try {
-      const res = await fetch(`API_ENDPOINTS.BACKEND.USERS${userId}`, {
+      const res = await fetch(`${API_ENDPOINTS.BACKEND.USERS}${userId}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

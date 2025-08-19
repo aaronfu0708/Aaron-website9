@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
     const uid = urlParams.get("uid");
     try {
       const res = await fetch(
-        "API_ENDPOINTS.BACKEND.RESET_PASSWORD_FROM_EMAIL",
+        API_ENDPOINTS.BACKEND.RESET_PASSWORD_FROM_EMAIL,
         {
           method: "POST",
           headers: {
