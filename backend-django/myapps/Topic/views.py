@@ -652,7 +652,7 @@ class NoteEdit(APIView):
             return Response({'error': f'Internal server error: {str(e)}'}, status=500)
         
     # 軟刪除
-    def delete(self , request, note_id):
+    def delete(self, request, note_id):
         try:
             note_instance = Note.objects.get(
                 id=note_id,
@@ -661,9 +661,11 @@ class NoteEdit(APIView):
             if note_instance:
                 note_instance.deleted_at = timezone.now()
                 note_instance.save()
-                return Response({'message': 'Note deleted successfully'}, status=204)
+                response = Response({'message': 'Note deleted successfully'}, status=204)
+                return add_cors_headers(response)
         except Note.DoesNotExist:
-            return Response({'error': f'Note with ID {note_id} not found'}, status=404)
+            response = Response({'error': f'Note with ID {note_id} not found'}, status=404)
+            return add_cors_headers(response)
 
 class NoteListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -687,15 +689,17 @@ class NoteListView(APIView):
                     quiz_topic__deleted_at__isnull=True
                 ).order_by('-created_at')  # 按創建時間倒序排列
             
-            return Response({
+            response = Response({
                 'notes': NoteSerializer(notes, many=True).data,
                 'count': notes.count()
             }, status=200)
+            return add_cors_headers(response)
             
         except Exception as e:
-            return Response({
+            response = Response({
                 'error': f'Error fetching notes: {str(e)}'
             }, status=500)
+            return add_cors_headers(response)
     
     # 手動新增空白筆記
     def post(self, request):
@@ -719,13 +723,15 @@ class NoteListView(APIView):
                 topic=None,  # 手動新增的筆記沒有關聯的題目
                 content=content
             )
-            return Response({
+            response = Response({
                 'message': 'Note created successfully',
                 'note_id': note.id
             }, status=201)
+            return add_cors_headers(response)
 
         except Exception as e:
-            return Response({'error': f'Internal server error: {str(e)}'}, status=500)
+            response = Response({'error': f'Internal server error: {str(e)}'}, status=500)
+            return add_cors_headers(response)
 
 
 class CreateQuizTopicView(APIView):

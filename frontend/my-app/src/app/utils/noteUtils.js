@@ -269,7 +269,7 @@ export async function addNote(note) {
 // 刪除筆記 - 優化為更新緩存
 export async function deleteNote(noteId) {
   try {
-    const res = await fetch(`API_ENDPOINTS.BACKEND.NOTES${noteId}/`, {
+    const res = await fetch(`${API_ENDPOINTS.BACKEND.NOTES}${noteId}/`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -299,7 +299,7 @@ export async function updateNote(noteId, updatedNote) {
       content: updatedNote.content,
     };
 
-    const res = await fetch(`API_ENDPOINTS.BACKEND.NOTES${noteId}/`, {
+    const res = await fetch(`${API_ENDPOINTS.BACKEND.NOTES}${noteId}/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -340,7 +340,7 @@ export async function moveNote(noteId, newSubject) {
     const apiData = {
       quiz_topic_id: targetSubject.id,
     };
-    const res = await fetch(`API_ENDPOINTS.BACKEND.NOTES${noteId}/`, {
+    const res = await fetch(`${API_ENDPOINTS.BACKEND.NOTES}${noteId}/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
