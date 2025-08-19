@@ -2,7 +2,7 @@
 // 解析內容收藏模態框組件 - 允許用戶將 AI 解析內容收藏到筆記本中
 
 import { useState, useEffect } from "react";
-import { API_ENDPOINTS } from "../utils/apiConfig";
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 import SubjectSelector from "./SubjectSelector";
 import NoteSelector from "./NoteSelector";
 import ContentEditor from "./ContentEditor";

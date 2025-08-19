@@ -2,7 +2,7 @@
 // 題目收藏模態框組件 - 允許用戶將題目收藏到指定的筆記本中
 
 import { useState, useEffect } from "react";
-import { API_ENDPOINTS } from "../utils/apiConfig";
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 import Image from "next/image";
 import SubjectSelector from "./SubjectSelector";
 import NoteSelector from "./NoteSelector";

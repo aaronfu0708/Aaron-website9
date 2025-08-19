@@ -2,7 +2,7 @@
 // AI 解析側邊欄組件 - 提供題目解析對話介面，支援與 AI 互動討論
 
 import { useState, useEffect } from "react";
-import { API_ENDPOINTS } from "../utils/apiConfig";
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 import Image from "next/image";
 
 export default function AnalysisOverlay({

@@ -2,7 +2,7 @@
 // 完整對話收藏模態框組件 - 允許用戶將整個 AI 對話記錄收藏到筆記本中
 
 import { useState, useEffect } from "react";
-import { API_ENDPOINTS } from "../utils/apiConfig";
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 import SubjectSelector from "./SubjectSelector";
 import NoteSelector from "./NoteSelector";
 import ContentEditor from "./ContentEditor";
