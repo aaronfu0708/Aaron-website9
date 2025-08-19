@@ -1062,8 +1062,7 @@ def extract_key_words(content):
     sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
     return [word for word, freq in sorted_words[:3]]
 
-if __name__ == '__main__':
-    if __name__ == "__main__":
+if __name__ == "__main__":
     # 從環境變數獲取配置，預設值為開發環境
     debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
     host = os.getenv("FLASK_HOST", "0.0.0.0")
