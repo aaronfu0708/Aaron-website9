@@ -135,9 +135,12 @@ const Game = () => {
         body: JSON.stringify(payload),
       });
 
-      // 簡單錯誤處理（不中斷原流程）
+      // 錯誤處理：如果API調用失敗，不繼續執行
       if (!res.ok) {
         console.error("提交答案失敗：", res.status, await res.text());
+        setShowDecryption(false);
+        setIsProcessing(false);
+        return; // 直接返回，不繼續執行
       }
       
       // 成功後，獲取熟悉度

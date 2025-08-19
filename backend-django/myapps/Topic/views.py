@@ -966,6 +966,8 @@ class SubmitAnswerView(APIView):
                 total_questions = len(updates)
                 quiz_topic_id = None
                 difficulty_name = None
+                # 初始化 data 變數，避免作用域問題
+                data = None
                 
                 # 難度 ID 轉英文名稱的對照表
                 difficulty_mapping = {
@@ -1048,12 +1050,14 @@ class SubmitAnswerView(APIView):
                     print(f"熟悉度 API 回應內容: {data}")
                 except Exception as e:
                     print(f"呼叫熟悉度 API 失敗: {str(e)}")
+                    data = 0  # 設置默認值
 
                 response = Response({
                     "message": "Batch answers submitted successfully",
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
-                    "familiarity_api_response": data
+                    "familiarity": data,  # 改為 "familiarity" 匹配前端期望
+                    "familiarity_api_response": data  # 保留這個作為備用
                 }, status=201)
                 return add_cors_headers(response)
             
@@ -1064,6 +1068,8 @@ class SubmitAnswerView(APIView):
                 total_questions = len(request.data)
                 quiz_topic_id = None
                 difficulty_name = None
+                # 初始化 data 變數，避免作用域問題
+                data = None
                 
                 # 難度 ID 轉英文名稱的對照表
                 difficulty_mapping = {
@@ -1125,12 +1131,14 @@ class SubmitAnswerView(APIView):
                     print(f"熟悉度 API 回應內容: {data}")
                 except Exception as e:
                     print(f"呼叫熟悉度 API 失敗: {str(e)}")
+                    data = 0  # 設置默認值
                 
                 response = Response({
                     "message": "Batch answers submitted successfully",
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
-                    "familiarity_api_response": data
+                    "familiarity": data,  # 改為 "familiarity" 匹配前端期望
+                    "familiarity_api_response": data  # 保留這個作為備用
                 }, status=201)
                 return add_cors_headers(response)
             
