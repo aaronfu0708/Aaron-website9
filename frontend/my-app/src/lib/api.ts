@@ -1,4 +1,4 @@
-const ORIGIN = process.env.NEXT_PUBLIC_API_ORIGIN || "http://localhost:8000";
+const ORIGIN = process.env.NEXT_PUBLIC_API_ORIGIN || "https://aaron-website.onrender.com";
 // const PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || "/api";
 
 // export const API_BASE = `${ORIGIN}${PREFIX}`; // 例: http://.../api
