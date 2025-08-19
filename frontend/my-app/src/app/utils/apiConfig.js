@@ -2,13 +2,13 @@
 // 根據環境自動選擇正確的API端點
 
 // 後端Django API端點
-export const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://127.0.0.1:8000';
+export const BACKEND_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://aaron-website9-backend.onrender.com';
 
 // ML服務API端點
-export const ML_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_ML_SERVICE_URL || 'http://127.0.0.1:5000';
+export const ML_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_ML_SERVICE_URL || 'https://aaron-website9-ml.onrender.com';
 
 // 前端網址
-export const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+export const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://aaron-website9.vercel.app';
 
 // 常用API端點
 export const API_ENDPOINTS = {
@@ -52,9 +52,9 @@ export const isDevelopment = () => {
 export const getCurrentApiEndpoints = () => {
   if (isProduction()) {
     return {
-      backend: BACKEND_API_BASE_URL,
-      mlService: ML_SERVICE_BASE_URL,
-      frontend: FRONTEND_URL
+      backend: 'https://aaron-website9-backend.onrender.com',
+      mlService: 'https://aaron-website9-ml.onrender.com',
+      frontend: 'https://aaron-website9.vercel.app'
     };
   } else {
     return {

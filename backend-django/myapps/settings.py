@@ -30,7 +30,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or 'django-insecure-fallback-key-for
 DEBUG = os.getenv('DJANGO_DEBUG', '0') == '1'
 
 # 所有連線 - 生產環境應該明確指定域名
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'aaron-website9-backend.onrender.com,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'aaron-website9-backend.onrender.com,aaron-website9.vercel.app,localhost,127.0.0.1').split(',')
+
+# 確保生產環境域名始終被包含
+if 'aaron-website9-backend.onrender.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('aaron-website9-backend.onrender.com')
 
 
 

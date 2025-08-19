@@ -26,5 +26,6 @@ def health_check(request):
         'debug': getattr(settings, 'DEBUG', 'unknown'),
         'allowed_hosts': getattr(settings, 'ALLOWED_HOSTS', 'unknown'),
         'database': db_status,
+        'secret_key_set': bool(getattr(settings, 'SECRET_KEY', None)),
         'timestamp': '2024-08-19'
     })
