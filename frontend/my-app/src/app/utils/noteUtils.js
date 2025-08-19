@@ -51,7 +51,7 @@ export async function getNotes() {
     if (notesCache && (now - lastFetchTime) < CACHE_DURATION) {
       return notesCache;
     }
-    const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -130,7 +130,7 @@ export async function getSubjects() {
     if (subjectsCache && (now - lastFetchTime) < CACHE_DURATION) {
       return subjectsCache;
     }
-    const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -171,7 +171,7 @@ export async function getSubjectsWithIds() {
         return cachedSubjects;
       }
     }
-    const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -212,7 +212,7 @@ export async function addNote(note) {
     // 先獲取主題列表，找到對應的Quiz ID
     const subjectsData = await getSubjects();
     
-    const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -241,7 +241,7 @@ export async function addNote(note) {
       quiz_topic: targetTopic.id, // 主題ID（數字）
       content: note.content, // 筆記內容
     };
-    const noteRes = await fetch("API_ENDPOINTS.BACKEND.NOTES", {
+    const noteRes = await fetch(API_ENDPOINTS.BACKEND.NOTES, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -368,7 +368,7 @@ export async function moveNote(noteId, newSubject) {
 // 添加主題 - 優化為更新緩存
 export async function addSubject(subjectName) {
   try {
-    const res = await fetch("API_ENDPOINTS.BACKEND.CREATE_QUIZ", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.CREATE_QUIZ, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -403,7 +403,7 @@ export async function deleteSubject(subjectName, subjectId = null) {
     // 如果沒有傳入ID，則需要查找
     if (!targetSubjectId) {
       // 直接調用API獲取主題信息，避免使用緩存邏輯
-      const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+      const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -457,7 +457,7 @@ export async function deleteSubjectFast(subjectName) {
   try {
     // 直接從現有的notes和subjects中查找主題ID
     // 這裡假設我們已經有了主題的ID信息
-    const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -510,7 +510,7 @@ export async function deleteSubjectUltraFast(subjectName) {
         // 這裡我們需要從筆記的關聯中找到主題ID
         // 由於筆記結構的限制，我們還是需要調用一次API
         // 但我們可以優化這個調用
-        const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+        const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -567,7 +567,7 @@ export async function deleteSubjectSmart(subjectName) {
     
     // 如果緩存中沒有ID，則查詢一次
     if (!targetSubjectId) {
-      const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+      const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -648,7 +648,7 @@ export async function getNotesBySubject(subject) {
 // 從後端載入使用者的主題與收藏筆記，並同步到本地 notes/subjects - 優化為更新緩存
 export async function loadUserQuizAndNotes() {
   try {
-    const res = await fetch("API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES", {
+    const res = await fetch(API_ENDPOINTS.BACKEND.USER_QUIZ_AND_NOTES, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

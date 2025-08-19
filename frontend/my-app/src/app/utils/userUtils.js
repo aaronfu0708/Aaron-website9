@@ -10,7 +10,7 @@ export async function getUserFamiliarityFromAPI() {
             return [];
         }
 
-        const res = await fetch("API_ENDPOINTS.BACKEND.FAMILIARITY", {
+        const res = await fetch(API_ENDPOINTS.BACKEND.FAMILIARITY, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -99,7 +99,7 @@ export async function submitUserAnswers(updates) {
             return null;
         }
 
-        const res = await fetch("API_ENDPOINTS.BACKEND.SUBMIT_ANSWER", { // 更新 API URL
+        const res = await fetch(API_ENDPOINTS.BACKEND.SUBMIT_ANSWER, { // 更新 API URL
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
