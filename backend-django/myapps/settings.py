@@ -21,17 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # 載入 .env 檔案 - 指定完整路徑
 load_dotenv(BASE_DIR / '.env')
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or 'django-insecure-fallback-key-for-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', '0') == '1'
 
-# 所有連線
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
+# 所有連線 - 生產環境應該明確指定域名
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'aaron-website9-backend.onrender.com,localhost,127.0.0.1').split(',')
 
 
 
@@ -90,7 +89,7 @@ WSGI_APPLICATION = "myapps.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# 開發環境使用 SQLite（暫時）
+# 資料庫設定 - 支援 MySQL 和 SQLite
 DATABASES = {
     "default": {
         "ENGINE": os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
@@ -99,6 +98,9 @@ DATABASES = {
         "PASSWORD": os.getenv('DB_PASSWORD', ''),
         "HOST": os.getenv('DB_HOST', ''),
         "PORT": os.getenv('DB_PORT', ''),
+        "OPTIONS": {
+            "charset": "utf8mb4",
+        } if os.getenv('DB_ENGINE') == 'django.db.backends.mysql' else {},
     }
 }
 
@@ -186,6 +188,28 @@ CSRF_EXEMPT_URLS = [
     r'^/login',
     r'^/register',
 ]
+
+# 日誌設定
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 
 # 郵件發送設定：Gmail SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
