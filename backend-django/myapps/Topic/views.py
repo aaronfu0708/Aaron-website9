@@ -20,7 +20,8 @@ def add_cors_headers(response):
     response["Access-Control-Allow-Origin"] = "*"
     response["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-    response["Access-Control-Allow-Credentials"] = "true"
+    # 當Access-Control-Allow-Origin為*時，不能設置Access-Control-Allow-Credentials為true
+    # response["Access-Control-Allow-Credentials"] = "true"  # 註釋掉，避免衝突
     response["Access-Control-Max-Age"] = "86400"
     return response
 
@@ -934,7 +935,7 @@ class SubmitAnswerView(APIView):
             user_answer = request.data.get("user_answer")
             updates = request.data.get("updates", [])
             is_test = request.data.get("is_test", False)  # 前端回傳是否為 TEST 模式
-            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            # 移除有問題的token處理，因為我們不需要在這裡分割token
 
             print(f"=== SubmitAnswerView Debug ===")
             print(f"topic_id: {topic_id}")
@@ -1014,7 +1015,7 @@ class SubmitAnswerView(APIView):
                 # 準備傳送到熟悉度 API 的資料
                 payload = {
                     "quiz_topic_id": quiz_topic_id,
-                    "difficulty": difficulty_name,
+                    "difficulty_level": difficulty_name,  # 使用 difficulty_level 而不是 difficulty
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
                 }
@@ -1070,6 +1071,7 @@ class SubmitAnswerView(APIView):
                 total_questions = len(request.data)
                 quiz_topic_id = None
                 difficulty_name = None
+                difficulty_id = 1  # 初始化默認值
                 # 初始化 data 變數，避免作用域問題
                 data = None
                 
@@ -1109,7 +1111,7 @@ class SubmitAnswerView(APIView):
                 # 準備傳送到熟悉度 API 的資料
                 payload = {
                     "quiz_topic_id": quiz_topic_id,
-                    "difficulty": difficulty_name,
+                    "difficulty_level": difficulty_name,  # 使用 difficulty_level 而不是 difficulty
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
                 }
@@ -1117,13 +1119,14 @@ class SubmitAnswerView(APIView):
                 # 判斷是否為 TEST 模式或 error 難度（id=5），直接回傳，不呼叫API
                 if is_test or difficulty_id == 5:
                     message = "Test mode - no API call" if is_test else "Error level - no API call"
-                    return Response({
+                    response = Response({
                         "message": f"Batch answers submitted successfully ({message})",
                         "total_questions": total_questions,
                         "correct_answers": correct_answers,
                         "familiarity": 0,  # 添加 familiarity 字段，設置為默認值
                         "familiarity_api_response": 0  # 添加備用字段
                     }, status=201)
+                    return add_cors_headers(response)
                 
                 print(f"=== 傳送到熟悉度 API 的資料 (List格式) ===")
                 print(f"Payload: {payload}")

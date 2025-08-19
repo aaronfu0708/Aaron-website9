@@ -240,14 +240,10 @@ CORS_ALLOW_CREDENTIALS = True
 # 新增：是否在響應中包含CORS頭部
 CORS_REPLACE_HTTPS_REFERER = False
 
-# 新增：允許所有來源（用於Render部署環境的調試）
-CORS_ALLOW_ALL_ORIGINS = True
-
-# 新增：允許所有頭部
-CORS_ALLOW_ALL_HEADERS = True
-
-# 新增：允許所有方法
-CORS_ALLOW_ALL_METHODS = True
+# 移除衝突的全局允許設置，讓django-cors-headers正常工作
+# CORS_ALLOW_ALL_ORIGINS = True  # 註釋掉，避免覆蓋其他設置
+# CORS_ALLOW_ALL_HEADERS = True  # 註釋掉，避免覆蓋其他設置  
+# CORS_ALLOW_ALL_METHODS = True  # 註釋掉，避免覆蓋其他設置
 
 # CSRF 設置 - 對 API 端點豁免 CSRF 檢查
 CSRF_TRUSTED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")
