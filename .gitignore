@@ -4,6 +4,9 @@
 .env.production
 .env.development
 
+# Render 配置（包含敏感信息）
+render.yaml
+
 # Python
 __pycache__/
 *.py[cod]
@@ -60,3 +63,4 @@ Thumbs.db
 # 部署
 .vercel
 .netlify
+# Railway (已移除，改用 Render)

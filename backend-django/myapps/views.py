@@ -6,7 +6,7 @@ from django.views.decorators.http import require_http_methods
 @require_http_methods(["GET"])
 def health_check(request):
     """
-    健康檢查端點，用於 Railway 部署檢查
+    健康檢查端點，用於 Render 部署檢查
     """
     return JsonResponse({
         'status': 'healthy',

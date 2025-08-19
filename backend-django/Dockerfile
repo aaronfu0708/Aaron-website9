@@ -48,5 +48,5 @@ COPY . .
 # Expose the port that the application listens on.
 EXPOSE 8000
 
-# Run the application with dynamic port support for Railway
+# Run the application with dynamic port support for Render
 CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:${PORT:-8000}"]

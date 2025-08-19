@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 複製所有源代碼
 COPY . .
 
-# 暴露端口（Railway 會動態分配）
+# 暴露端口（Render 會動態分配）
 EXPOSE 5000
 
-# 使用動態端口啟動服務（Railway 會提供 PORT 環境變數）
+# 使用動態端口啟動服務（Render 會提供 PORT 環境變數）
 CMD ["sh", "-c", "gunicorn -k eventlet -w 1 -b 0.0.0.0:${PORT:-5000} topic_apps:app"]
