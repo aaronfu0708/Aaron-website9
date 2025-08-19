@@ -68,6 +68,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
 ]
 
 ROOT_URLCONF = "myapps.urls"
@@ -200,6 +201,53 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"https://aaron-website9-[a-zA-Z0-9]+-aaronfu0708s-projects\.vercel\.app",
     r"https://aaron-website9\.vercel\.app",
 ]
+
+# 新增：允許的HTTP方法
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# 新增：允許的HTTP頭部
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# 新增：暴露的HTTP頭部
+CORS_EXPOSE_HEADERS = [
+    'content-type',
+    'content-disposition',
+]
+
+# 新增：預檢請求的緩存時間（秒）
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24小時
+
+# 新增：是否允許攜帶憑證（cookies, authorization headers等）
+CORS_ALLOW_CREDENTIALS = True
+
+# 新增：是否在響應中包含CORS頭部
+CORS_REPLACE_HTTPS_REFERER = False
+
+# 新增：允許所有來源（用於Render部署環境的調試）
+CORS_ALLOW_ALL_ORIGINS = True
+
+# 新增：允許所有頭部
+CORS_ALLOW_ALL_HEADERS = True
+
+# 新增：允許所有方法
+CORS_ALLOW_ALL_METHODS = True
 
 # CSRF 設置 - 對 API 端點豁免 CSRF 檢查
 CSRF_TRUSTED_ORIGINS = os.getenv("NEXT_PUBLIC_ORIGIN", "https://aaron-website9.vercel.app,https://aaron-website9-a92ja5jgp-aaronfu0708s-projects.vercel.app,https://aaron-website9-hy1cs9xgf-aaronfu0708s-projects.vercel.app,https://aaron-website9-ol779g7a6-aaronfu0708s-projects.vercel.app,http://localhost:3000,http://127.0.0.1:3000").split(",")

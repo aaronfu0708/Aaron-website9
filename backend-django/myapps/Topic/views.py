@@ -14,6 +14,16 @@ from rest_framework.response import Response
 from django.db import transaction
 import os , requests
 
+# CORS 裝飾器函數 - 為所有API響應添加CORS頭部
+def add_cors_headers(response):
+    """為響應添加CORS頭部"""
+    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    response["Access-Control-Allow-Credentials"] = "true"
+    response["Access-Control-Max-Age"] = "86400"
+    return response
+
 FLASK_BASE_URL = os.getenv("FLASK_BASE_URL", "http://localhost:5000")
 DJANGO_BASE_URL = os.getenv("DJANGO_BASE_URL", "http://localhost:8000")
 # Create your views here.
@@ -907,6 +917,12 @@ class UsersQuizAndNote(APIView):
 # 前端回傳 用戶答案
 class SubmitAnswerView(APIView):
     permission_classes = [IsAuthenticated]
+    
+    def options(self, request, *args, **kwargs):
+        """處理OPTIONS預檢請求"""
+        response = Response()
+        return add_cors_headers(response)
+    
     def post(self, request):
         from django.db import transaction
         
@@ -939,7 +955,8 @@ class SubmitAnswerView(APIView):
                 topic.User_answer = user_answer
                 topic.save()
                 Ai_answer = topic.Ai_answer
-                return Response({"message": "Answer submitted successfully"}, status=201)
+                response = Response({"message": "Answer submitted successfully"}, status=201)
+                return add_cors_headers(response)
                 # 計算總題數與正確數
 
             elif updates:
@@ -1003,11 +1020,12 @@ class SubmitAnswerView(APIView):
                 # 判斷是否為 TEST 模式或 error 難度（id=5），直接回傳，不呼叫API
                 if is_test or difficulty_id == 5:
                     message = "Test mode - no API call" if is_test else "Error level - no API call"
-                    return Response({
+                    response = Response({
                         "message": f"Batch answers submitted successfully ({message})",
                         "total_questions": total_questions,
                         "correct_answers": correct_answers
                     }, status=201)
+                    return add_cors_headers(response)
                 
                 print(f"=== 傳送到熟悉度 API 的資料 ===")
                 print(f"Payload: {payload}")
@@ -1031,12 +1049,13 @@ class SubmitAnswerView(APIView):
                 except Exception as e:
                     print(f"呼叫熟悉度 API 失敗: {str(e)}")
 
-                return Response({
+                response = Response({
                     "message": "Batch answers submitted successfully",
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
                     "familiarity_api_response": data
                 }, status=201)
+                return add_cors_headers(response)
             
             # 處理直接傳陣列的格式 [{"id": 276, "user_answer": "A"}]
             elif isinstance(request.data, list):
@@ -1107,15 +1126,17 @@ class SubmitAnswerView(APIView):
                 except Exception as e:
                     print(f"呼叫熟悉度 API 失敗: {str(e)}")
                 
-                return Response({
+                response = Response({
                     "message": "Batch answers submitted successfully",
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
                     "familiarity_api_response": data
                 }, status=201)
+                return add_cors_headers(response)
             
             else:
-                return Response({"error": "Either 'topic' and 'user_answer' or 'updates' are required"}, status=400)
+                response = Response({"error": "Either 'topic' and 'user_answer' or 'updates' are required"}, status=400)
+                return add_cors_headers(response)
 
 class NoteEditQuizTopicView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1144,6 +1165,8 @@ class NoteEditQuizTopicView(APIView):
             topic = Topic.objects.filter(id=note.topic.id, deleted_at__isnull=True).update(quiz_topic=new_quiz_topic)
 
 
-            return Response({"message": "Note and related topics topic updated successfully"}, status=200)
+            response = Response({"message": "Note and related topics topic updated successfully"}, status=200)
+            return add_cors_headers(response)
         except Exception as e:
-            return Response({"error": f"Internal server error: {str(e)}"}, status=500)
+            response = Response({"error": f"Internal server error: {str(e)}"}, status=500)
+            return add_cors_headers(response)
