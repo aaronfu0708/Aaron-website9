@@ -8,7 +8,7 @@ Function views
     1. Add an import:  from my_app import views
     2. Add a URL to urlpatterns:  path('', views.home, name='home')
 Class-based views
-    1. Add an import:  from other_app import views
+    1. Add an import:  from other_app.views import Home
     2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
 Including another URLconf
     1. Import the include() function: from django.urls import include, path
@@ -18,10 +18,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include ,re_path
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from . import views
 
 schema_view = get_schema_view(
     openapi.Info(title="API 文件", default_version='v1'),
@@ -29,14 +29,6 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-# 健康檢查端點
-def health_check(request):
-    """健康檢查端點，用於監控服務狀態"""
-    return JsonResponse({
-        "status": "ok",
-        "service": "Django Backend",
-        "message": "服務運行正常"
-    })
 
 # 簡單的 JWT 路由，直接使用類視圖
 @csrf_exempt
@@ -92,10 +84,8 @@ def jwt_refresh_view(request):
 
 
 urlpatterns = [
-    # 健康檢查端點
-    path("health/", health_check, name='health_check'),
-    
     path("admin/", admin.site.urls),
+    path("health/", views.health_check, name='health_check'),  # 健康檢查端點
     path("api/token/", jwt_token_view, name='token_obtain_pair'),
     path("api/token/refresh/", jwt_refresh_view, name='token_refresh'),
     path("api/", include("myapps.Topic.urls")),  # 包含 Topic app 的 URLs

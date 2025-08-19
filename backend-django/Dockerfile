@@ -36,7 +36,6 @@ RUN apt-get update \
 # Copy the requirements.txt file
 COPY requirements.txt .
 
-
 # Install dependencies using pip
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -49,5 +48,5 @@ COPY . .
 # Expose the port that the application listens on.
 EXPOSE 8000
 
-# Run the application.
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run the application with dynamic port support for Railway
+CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:${PORT:-8000}"]
