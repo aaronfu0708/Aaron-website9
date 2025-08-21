@@ -13,6 +13,84 @@ from django.utils import timezone
 from rest_framework.response import Response
 from django.db import transaction
 import os , requests
+import time
+from functools import wraps
+from django.db import connection
+
+# 資料庫查詢效能監控裝飾器
+def monitor_query_performance(func):
+    """監控資料庫查詢效能的裝飾器"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        start_queries = len(connection.queries) if hasattr(connection, 'queries') else 0
+        
+        try:
+            result = func(*args, **kwargs)
+            
+            end_time = time.time()
+            end_queries = len(connection.queries) if hasattr(connection, 'queries') else 0
+            
+            execution_time = end_time - start_time
+            query_count = end_queries - start_queries
+            
+            print(f"=== 效能監控: {func.__name__} ===")
+            print(f"執行時間: {execution_time:.4f} 秒")
+            print(f"資料庫查詢次數: {query_count}")
+            print(f"平均查詢時間: {execution_time/max(query_count, 1):.4f} 秒/查詢")
+            print("=" * 50)
+            
+            return result
+            
+        except Exception as e:
+            end_time = time.time()
+            execution_time = end_time - start_time
+            
+            print(f"=== 效能監控錯誤: {func.__name__} ===")
+            print(f"執行時間: {execution_time:.4f} 秒")
+            print(f"錯誤: {str(e)}")
+            print("=" * 50)
+            
+            raise
+    
+    return wrapper
+
+# 資料庫查詢優化工具函數
+def optimize_quiz_query(user):
+    """優化Quiz查詢：一次性獲取用戶的所有Quiz和相關Topic"""
+    return Quiz.objects.select_related('user').prefetch_related(
+        'topic_set'  # 預先載入所有相關的 Topic
+    ).filter(
+        user=user, 
+        deleted_at__isnull=True
+    ).order_by('-created_at')
+
+def optimize_topic_query(quiz):
+    """優化Topic查詢：一次性獲取Quiz下的所有Topic和難度資料"""
+    return Topic.objects.select_related('difficulty').filter(
+        quiz_topic=quiz,
+        deleted_at__isnull=True
+    ).order_by('created_at')
+
+def optimize_note_query(user, quiz_topic=None):
+    """優化Note查詢：一次性獲取用戶的筆記和相關資料"""
+    queryset = Note.objects.select_related('quiz_topic', 'user').filter(
+        user=user,
+        deleted_at__isnull=True,
+        quiz_topic__deleted_at__isnull=True
+    )
+    
+    if quiz_topic:
+        queryset = queryset.filter(quiz_topic=quiz_topic)
+    
+    return queryset.order_by('-created_at')
+
+def optimize_favorite_query(user):
+    """優化收藏查詢：一次性獲取用戶的所有收藏和相關資料"""
+    return UserFavorite.objects.filter(
+        user=user, 
+        deleted_at__isnull=True
+    ).select_related('quiz', 'quiz__user')
 
 # CORS 裝飾器函數 - 為所有API響應添加CORS頭部
 def add_cors_headers(response):
@@ -155,16 +233,17 @@ class QuizViewSet(APIView):
     def get(self, request):
         # 直接從 Django 資料庫獲取資料，不調用 Flask
         try:
-            # 獲取當前用戶的所有 Quiz 和相關的 Topic
-            quizzes = Quiz.objects.filter(user=request.user, deleted_at__isnull=True)
+            # 使用優化查詢工具函數，大幅提升查詢效能
+            quizzes = optimize_quiz_query(request.user)
+            
             print(f"=== GET 方法除錯 ===")
             print(f"用戶: {request.user}")
             print(f"找到 {quizzes.count()} 個 Quiz")
             
             quiz_list = []
             for quiz in quizzes:
-                # 獲取該 Quiz 相關的 Topics
-                topics = Topic.objects.filter(quiz_topic=quiz)
+                # 使用預先載入的 topic_set，避免額外查詢
+                topics = quiz.topic_set.all()
                 
                 quiz_data = {
                     'id': quiz.id,
@@ -247,11 +326,14 @@ class QuizTopicsViewSet(APIView):
     def get(self, request, quiz_id):
         """根據Quiz ID獲取該Quiz下的所有題目"""
         try:
-            # 檢查 Quiz 是否存在
-            quiz = Quiz.objects.get(id=quiz_id, deleted_at__isnull=True)
+            # 優化查詢：使用 select_related 一次性獲取 Quiz 和相關的 user 資料
+            quiz = Quiz.objects.select_related('user').get(
+                id=quiz_id, 
+                deleted_at__isnull=True
+            )
             
-            # 獲取該 Quiz 下的所有 Topics
-            topics = Topic.objects.filter(
+            # 優化查詢：使用 select_related 一次性獲取所有相關的 Topic 和 difficulty 資料
+            topics = Topic.objects.select_related('difficulty').filter(
                 quiz_topic=quiz,
                 deleted_at__isnull=True
             ).order_by('created_at')
@@ -675,15 +757,16 @@ class NoteListView(APIView):
         try:
             if 'quiz_topic' in request.data:
                 quiz_topic = request.data.get('quiz_topic')
-                notes = Note.objects.filter(
+                # 優化查詢：使用 select_related 一次性獲取相關資料
+                notes = Note.objects.select_related('quiz_topic', 'user').filter(
                     quiz_topic=quiz_topic,
                     user=request.user,
                     deleted_at__isnull=True,
                     quiz_topic__deleted_at__isnull=True
                 ).order_by('-created_at')  # 按創建時間倒序排列
             else:
-                # 使用 filter 而不是 get，獲取多個筆記
-                notes = Note.objects.filter(
+                # 優化查詢：使用 select_related 一次性獲取相關資料
+                notes = Note.objects.select_related('quiz_topic', 'user').filter(
                     user=request.user,
                     deleted_at__isnull=True,
                     quiz_topic__deleted_at__isnull=True
@@ -896,24 +979,35 @@ class UsersQuizAndNote(APIView):
 
     def get(self, request):
         user = request.user
-        # 取得該用戶所有有效收藏
-        favorites = UserFavorite.objects.filter(user=user, deleted_at__isnull=True)
-        # 取得所有被收藏的主題（quiz）
-        favor_quiz = Quiz.objects.filter(id__in=favorites.values_list('quiz_id', flat=True), deleted_at__isnull=True)
-
-        quiz_ids = favorites.values_list('quiz_id', flat=True).distinct()
-        quizzes = Quiz.objects.filter(id__in=quiz_ids, deleted_at__isnull=True).order_by('-created_at')
         
+        # 優化查詢：使用 select_related 和 prefetch_related 減少查詢次數
+        # 一次性獲取所有收藏的 Quiz 和相關資料
+        favorites = UserFavorite.objects.filter(
+            user=user, 
+            deleted_at__isnull=True
+        ).select_related('quiz', 'quiz__user')  # 預先載入 quiz 和 user 資料
+        
+        # 獲取所有被收藏的主題（quiz）ID
+        quiz_ids = favorites.values_list('quiz_id', flat=True).distinct()
+        
+        # 優化查詢：一次性獲取所有收藏的 Quiz，按創建時間倒序排列
+        quizzes = Quiz.objects.filter(
+            id__in=quiz_ids, 
+            deleted_at__isnull=True
+        ).select_related('user').order_by('-created_at')
+        
+        # 序列化 Quiz 資料
         topic_data = QuizSimplifiedSerializer(quizzes, many=True).data
 
-
-        # 取得這些主題的筆記（Note）- 修改為獲取所有屬於收藏主題的筆記，而不僅僅是收藏的筆記
-        favor_notes = Note.objects.filter(
+        # 優化查詢：一次性獲取所有屬於收藏主題的筆記
+        # 使用 select_related 預先載入 quiz_topic 和 user 資料
+        favor_notes = Note.objects.select_related('quiz_topic', 'user').filter(
             quiz_topic__in=quizzes,  # 屬於收藏主題的筆記
             user=user, 
             deleted_at__isnull=True
-        )
+        ).order_by('-created_at')  # 按創建時間倒序排列
 
+        # 序列化 Note 資料
         note_data = NoteSimplifiedSerializer(favor_notes, many=True).data
 
         return Response({

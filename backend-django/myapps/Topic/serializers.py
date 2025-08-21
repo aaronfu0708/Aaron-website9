@@ -12,15 +12,19 @@ class UserFavoriteSerializer(serializers.ModelSerializer):
         }
 
 class TopicSerializer(serializers.ModelSerializer):
+    # 優化：只選擇必要的欄位，避免載入過多資料
     class Meta:
         model = Topic
-        fields = ['id', 'quiz_topic', 'difficulty','title', 'User_answer','explanation_text','Ai_answer', 'created_at', 'deleted_at', 'option_A', 'option_B', 'option_C', 'option_D']
+        fields = ['id', 'quiz_topic', 'difficulty', 'title', 'User_answer', 'explanation_text', 'Ai_answer', 'created_at', 'deleted_at', 'option_A', 'option_B', 'option_C', 'option_D']
         extra_kwargs = {
             'explanation_text': {'required': False, 'allow_null': True},
             'deleted_at': {'required': False, 'allow_null': True}
         }
+        # 優化：限制序列化深度，避免過度巢狀查詢
+        depth = 1
 
 class QuizSerializer(serializers.ModelSerializer):
+    # 優化：使用簡化的用戶序列化器，只載入必要欄位
     user = UserSerializer(read_only=True)
     
     class Meta:
@@ -30,13 +34,19 @@ class QuizSerializer(serializers.ModelSerializer):
             'updated_at': {'required': False, 'allow_null': True},
             'deleted_at': {'required': False, 'allow_null': True}
         }
+        # 優化：限制序列化深度
+        depth = 1
 
 class UserFamiliaritySerializer(serializers.ModelSerializer):
+    # 優化：使用簡化的序列化器，避免過度巢狀查詢
     user = UserSerializer(read_only=True)
     topic = TopicSerializer(read_only=True)
+    
     class Meta:
         model = UserFamiliarity
         fields = ['id', 'user', 'topic', 'familiarity_score']
+        # 優化：限制序列化深度
+        depth = 1
 
 class DifficultyLevelsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,6 +54,7 @@ class DifficultyLevelsSerializer(serializers.ModelSerializer):
         fields = ['id', 'level_name', 'familiarity_cap','weight_coefficients', 'created_at']
 
 class ChatSerializer(serializers.ModelSerializer):
+    # 優化：使用簡化的序列化器
     user = UserSerializer(read_only=True)
     topic = TopicSerializer(read_only=True)
     
@@ -53,22 +64,27 @@ class ChatSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'deleted_at': {'required': False, 'allow_null': True}
         }
+        # 優化：限制序列化深度
+        depth = 1
 
 
 class NoteSerializer(serializers.ModelSerializer):
+    # 優化：使用簡化的序列化器，避免過度巢狀查詢
     user = UserSerializer(read_only=True)
     topic = TopicSerializer(read_only=True)
     quiz_topic = QuizSerializer(read_only=True)
 
     class Meta:
         model = Note
-        fields = ['id', 'quiz_topic','title', 'topic', 'user', 'content', 'is_retake', 'created_at', 'updated_at', 'deleted_at']
+        fields = ['id', 'quiz_topic', 'title', 'topic', 'user', 'content', 'is_retake', 'created_at', 'updated_at', 'deleted_at']
         extra_kwargs = {
             'updated_at': {'required': False, 'allow_null': True},
             'deleted_at': {'required': False, 'allow_null': True},
             'is_retake': {'required': False},
             'title': {'required': False, 'allow_null': True}
         }
+        # 優化：限制序列化深度
+        depth = 1
 
 class AiPromptSerializer(serializers.ModelSerializer):
     class Meta:

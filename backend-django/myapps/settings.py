@@ -114,10 +114,70 @@ DATABASES = {
         "PORT": os.getenv('DB_PORT', ''),
         "OPTIONS": {
             "charset": "utf8mb4",
+            # 資料庫查詢優化設定
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",  # 嚴格模式
+            "autocommit": True,  # 自動提交
+        } if os.getenv('DB_ENGINE') == 'django.db.backends.mysql' else {},
+        # 資料庫連接池設定（MySQL）
+        "CONN_MAX_AGE": 600,  # 連接最大存活時間（秒）
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            "autocommit": True,
         } if os.getenv('DB_ENGINE') == 'django.db.backends.mysql' else {},
     }
 }
 
+# 資料庫查詢優化設定
+if DEBUG:
+    # 開發環境：啟用查詢日誌
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'django.db.backends': {
+                'handlers': ['console'],
+                'level': 'DEBUG',  # 啟用SQL查詢日誌
+                'propagate': False,
+            },
+        },
+    }
+else:
+    # 生產環境：優化查詢效能
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # 生產環境只記錄警告和錯誤
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+        },
+    }
 
 
 # Password validation
@@ -271,26 +331,26 @@ CSRF_EXEMPT_URLS = [
 ]
 
 # 日誌設定
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'INFO',
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console'],
+#             'level': 'INFO',
+#             'propagate': False,
+#         },
+#     },
+# }
 
 # 郵件發送設定：Gmail SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

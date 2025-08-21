@@ -14,6 +14,39 @@ class AllObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()
 
+# 優化查詢管理器 - 提供常用的優化查詢方法
+class OptimizedQueryManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+    
+    def with_user_and_quiz(self):
+        """優化查詢：預先載入用戶和Quiz資料"""
+        return self.select_related('user', 'quiz_topic')
+    
+    def with_topics(self):
+        """優化查詢：預先載入相關的Topic資料"""
+        return self.prefetch_related('topic_set')
+    
+    def with_notes(self):
+        """優化查詢：預先載入相關的Note資料"""
+        return self.prefetch_related('note_set')
+    
+    def by_user(self, user):
+        """優化查詢：根據用戶篩選"""
+        return self.filter(user=user)
+    
+    def by_quiz_topic(self, quiz_topic):
+        """優化查詢：根據Quiz主題篩選"""
+        return self.filter(quiz_topic=quiz_topic)
+    
+    def recent_first(self):
+        """優化查詢：按創建時間倒序排列"""
+        return self.order_by('-created_at')
+    
+    def oldest_first(self):
+        """優化查詢：按創建時間正序排列"""
+        return self.order_by('created_at')
+
 # 使用者加入'最愛'
 # 儲存使用者最愛的題目
 # user_id: 使用者ID
@@ -21,14 +54,23 @@ class AllObjectsManager(models.Manager):
 # created_at: 建立時間
 # deleted_at: 刪除時間
 class UserFavorite(models.Model):
-    user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE)
-    note = models.ForeignKey("Topic.Note", on_delete=models.CASCADE , null=True, blank=True)
-    topic = models.ForeignKey("Topic.Topic", on_delete=models.CASCADE,null=True, blank=True)
-    quiz = models.ForeignKey("Topic.Quiz", on_delete=models.CASCADE,null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE, db_index=True)  # 優化：為用戶添加索引
+    note = models.ForeignKey("Topic.Note", on_delete=models.CASCADE , null=True, blank=True, db_index=True)  # 優化：為筆記添加索引
+    topic = models.ForeignKey("Topic.Topic", on_delete=models.CASCADE,null=True, blank=True, db_index=True)  # 優化：為題目添加索引
+    quiz = models.ForeignKey("Topic.Quiz", on_delete=models.CASCADE,null=True, blank=True, db_index=True)  # 優化：為Quiz添加索引
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 優化：為創建時間添加索引
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)  # 優化：為軟刪除欄位添加索引
+    
     class Meta:
         db_table = "UserFavorite"
+        # 優化：添加複合索引，提升常用查詢效能
+        indexes = [
+            models.Index(fields=['user', 'deleted_at']),  # 優化：用戶收藏查詢
+            models.Index(fields=['quiz', 'deleted_at']),  # 優化：Quiz收藏查詢
+            models.Index(fields=['topic', 'deleted_at']),  # 優化：題目收藏查詢
+            models.Index(fields=['note', 'deleted_at']),  # 優化：筆記收藏查詢
+            models.Index(fields=['user', 'quiz', 'deleted_at']),  # 優化：用戶特定Quiz收藏查詢
+        ]
 # 題目資料
 # 儲存題目資訊
 # quiz_topic: 題目名稱
@@ -42,8 +84,8 @@ class UserFavorite(models.Model):
 # created_at: 建立時間
 # deleted_at: 刪除時間
 class Topic(models.Model):
-    quiz_topic = models.ForeignKey("Topic.Quiz", on_delete=models.CASCADE)
-    title = models.CharField(max_length=512)
+    quiz_topic = models.ForeignKey("Topic.Quiz", on_delete=models.CASCADE, db_index=True)  # 優化：添加資料庫索引
+    title = models.CharField(max_length=512, db_index=True)  # 優化：為標題添加索引，支援搜尋
     # 選項 A～D
     option_A = models.CharField(max_length=128, null=True, blank=True)
     option_B = models.CharField(max_length=128, null=True, blank=True)
@@ -59,15 +101,22 @@ class Topic(models.Model):
             ('X', 'X')
         ], null=True, blank=True)  
     User_answer = models.CharField(max_length=1 , null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    difficulty= models.ForeignKey("Topic.DifficultyLevels", on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 優化：為創建時間添加索引，支援排序
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)  # 優化：為軟刪除欄位添加索引
+    difficulty= models.ForeignKey("Topic.DifficultyLevels", on_delete=models.CASCADE, null=True, blank=True, db_index=True)  # 優化：為難度添加索引
     # 管理器
     objects = SoftDeleteManager()  # 預設只顯示未刪除的
     all_objects = AllObjectsManager()  # 顯示所有記錄（包含已刪除）
     
     class Meta:
         db_table = "Topic"
+        # 優化：添加複合索引，提升常用查詢效能
+        indexes = [
+            models.Index(fields=['quiz_topic', 'deleted_at']),  # 優化：Quiz題目查詢
+            models.Index(fields=['user', 'deleted_at']),  # 優化：用戶題目查詢
+            models.Index(fields=['difficulty', 'deleted_at']),  # 優化：難度題目查詢
+            models.Index(fields=['created_at', 'deleted_at']),  # 優化：時間排序查詢
+        ]
 
     def soft_delete(self):
         """軟刪除 Topic"""
@@ -86,18 +135,25 @@ class Topic(models.Model):
 # updated_at: 更新時間
 # deleted_at: 刪除時間
 class Quiz(models.Model):
-    quiz_topic = models.CharField(max_length=254)
-    user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    quiz_topic = models.CharField(max_length=254, db_index=True)  # 優化：為題目名稱添加索引
+    user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE, null=True, blank=True, db_index=True)  # 優化：為用戶添加索引
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 優化：為創建時間添加索引
     updated_at = models.DateTimeField(null=True, blank=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)  # 優化：為軟刪除欄位添加索引
     
     # 管理器
     objects = SoftDeleteManager()  # 預設只顯示未刪除的
     all_objects = AllObjectsManager()  # 顯示所有記錄（包含已刪除）
+    optimized = OptimizedQueryManager()  # 優化查詢管理器
     
     class Meta:
         db_table = "Quiz"
+        # 優化：添加複合索引，提升常用查詢效能
+        indexes = [
+            models.Index(fields=['user', 'deleted_at']),  # 優化：用戶Quiz查詢
+            models.Index(fields=['created_at', 'deleted_at']),  # 優化：時間排序查詢
+            models.Index(fields=['quiz_topic', 'deleted_at']),  # 優化：題目名稱查詢
+        ]
     
     def soft_delete(self):
         """軟刪除 Quiz 及其相關的 Topic"""
@@ -176,29 +232,25 @@ class DifficultyLevels(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
         
-# note 資料庫
-# 儲存使用者筆記
-# quiz_topic: 關聯的考題ID
-# topic: 關聯的題目ID (保留可以新增空白筆記)
-# title: 筆記標題 (保留可以新增空白筆記)
-# user: 使用者ID
-# content: 筆記內容 (保留可以新增空白筆記)
-# retake: 是否再次測驗(針對筆記)
-# retake_score_id: 再次測驗分數ID
+# 筆記資料
+# 儲存使用者筆記資訊
+# user: 使用者
+# topic: 題目
+# quiz_topic: 題目主題
+# content: 筆記內容
 # created_at: 建立時間
 # updated_at: 更新時間
 # deleted_at: 刪除時間
-# 
 class Note(models.Model):
-    quiz_topic = models.ForeignKey("Topic.Quiz", on_delete=models.CASCADE)
-    topic = models.ForeignKey("Topic.Topic", on_delete=models.CASCADE, null=True, blank=True)
-    title = models.CharField(max_length=255, null=True, blank=True)
-    user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE)
-    content = models.TextField(null=True, blank=True)
+    user = models.ForeignKey("Authorization.User", on_delete=models.CASCADE, db_index=True)  # 優化：為用戶添加索引
+    topic = models.ForeignKey("Topic.Topic", on_delete=models.CASCADE, null=True, blank=True, db_index=True)  # 優化：為題目添加索引
+    quiz_topic = models.ForeignKey("Topic.Quiz", on_delete=models.CASCADE, null=True, blank=True, db_index=True)  # 優化：為題目主題添加索引
+    content = models.TextField()
+    title = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # 優化：為標題添加索引
     is_retake = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 優化：為創建時間添加索引
     updated_at = models.DateTimeField(null=True, blank=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)  # 優化：為軟刪除欄位添加索引
     
     # 管理器
     objects = SoftDeleteManager()  # 預設只顯示未刪除的
@@ -206,6 +258,13 @@ class Note(models.Model):
     
     class Meta:
         db_table = "Note"
+        # 優化：添加複合索引，提升常用查詢效能
+        indexes = [
+            models.Index(fields=['user', 'deleted_at']),  # 優化：用戶筆記查詢
+            models.Index(fields=['quiz_topic', 'deleted_at']),  # 優化：主題筆記查詢
+            models.Index(fields=['created_at', 'deleted_at']),  # 優化：時間排序查詢
+            models.Index(fields=['user', 'quiz_topic', 'deleted_at']),  # 優化：用戶特定主題筆記查詢
+        ]
     
     def soft_delete(self):
         """軟刪除 Note"""
