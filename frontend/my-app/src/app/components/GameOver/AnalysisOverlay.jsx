@@ -205,7 +205,7 @@ export default function AnalysisOverlay({
               return currentMessages.length === 0 ? (
                 <>
                   <div className={`${styles.message} ${styles.user}`}>
-                    你打的問題會在這裡
+                    
                   </div>
                   <div className={`${styles.message} ${styles.placeholder}`}>
                     <div
@@ -214,7 +214,6 @@ export default function AnalysisOverlay({
                     >
                       +
                     </div>
-                    AI的回答在這裡
                   </div>
                 </>
               ) : (
