@@ -211,13 +211,7 @@ export default function GamePage() {
           const data = await res.json();
           Familiarity = data.familiarity || 0;
           
-          // 處理熟悉度計算中的狀態
-          if (Familiarity === "計算中") {
-            console.log("熟悉度正在計算中，設置為計算中狀態");
-            Familiarity = "計算中";
-          } else if (typeof Familiarity === 'number') {
-            console.log(`熟悉度計算完成: ${Familiarity}`);
-          }
+
         } else {
           console.warn("API失敗，使用默認熟悉度值: 0");
         }
