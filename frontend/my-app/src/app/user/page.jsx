@@ -512,6 +512,38 @@ export default function UserPage() {
     return () => clearInterval(interval);
   }, [refreshData]);
 
+  // 新增：遊戲結束後自動刷新熟悉度數據
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'familiarity') {
+        console.log('檢測到熟悉度更新，自動刷新數據');
+        // 延遲1秒後刷新，確保後端計算完成
+        setTimeout(() => {
+          refreshData(true);
+        }, 1000);
+      }
+    };
+
+    // 監聽 sessionStorage 變化
+    window.addEventListener('storage', handleStorageChange);
+    
+    // 檢查是否有新的熟悉度數據
+    const checkFamiliarityUpdate = () => {
+      const familiarity = sessionStorage.getItem('familiarity');
+      if (familiarity && familiarity !== '0') {
+        console.log('檢測到新的熟悉度數據，自動刷新');
+        refreshData(true);
+      }
+    };
+
+    // 頁面載入時檢查
+    checkFamiliarityUpdate();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [refreshData]);
+
   // 鍵盤事件處理
   useEffect(() => {
     const handleKeyDown = (event) => {

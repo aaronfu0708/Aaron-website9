@@ -1207,47 +1207,55 @@ class SubmitAnswerView(APIView):
                     headers['Authorization'] = auth_header
                     print(f"Using Authorization header: {auth_header}")
                 
-                # 改善熟悉度API調用，增加超時和錯誤處理
-                try:
-                    print(f"=== 調用熟悉度 API ===")
-                    print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
-                    print(f"Payload: {payload}")
-                    print(f"Headers: {headers}")
-                    
-                    familiarity_response = requests.post(
-                        f"{DJANGO_BASE_URL}/api/familiarity/", 
-                        json=payload,
-                        headers=headers,
-                        timeout=5  # 優化：從30秒減少到5秒，提升響應速度
-                    )
-                    
-                    print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
-                    print(f"熟悉度 API 回應標頭: {dict(familiarity_response.headers)}")
-                    
-                    if familiarity_response.status_code == 200:
-                        try:
-                            response_data = familiarity_response.json()
-                            data = response_data.get("familiarity", 0)
-                            print(f"熟悉度 API 回應內容: {response_data}")
-                            print(f"提取的熟悉度值: {data}")
-                        except Exception as parse_error:
-                            print(f"解析熟悉度API回應失敗: {str(parse_error)}")
-                            print(f"原始回應內容: {familiarity_response.text}")
-                            data = 0
-                    else:
-                        print(f"熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
-                        print(f"錯誤回應內容: {familiarity_response.text}")
-                        data = 0
+                # 非同步處理熟悉度計算，立即回傳成功訊息
+                print(f"=== 非同步處理熟悉度計算 ===")
+                print(f"Payload: {payload}")
+                
+                # 在背景執行熟悉度計算，不等待結果
+                import threading
+                
+                def calculate_familiarity_async():
+                    try:
+                        print(f"=== 背景執行熟悉度計算 ===")
+                        print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
+                        print(f"Payload: {payload}")
                         
-                except requests.exceptions.Timeout:
-                    print("熟悉度 API 調用超時")
-                    data = 0
-                except requests.exceptions.ConnectionError as conn_error:
-                    print(f"熟悉度 API 連接錯誤: {str(conn_error)}")
-                    data = 0
-                except Exception as e:
-                    print(f"呼叫熟悉度 API 失敗: {str(e)}")
-                    data = 0  # 設置默認值
+                        # 獲取當前請求的 Authorization token
+                        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+                        headers = {}
+                        if auth_header:
+                            headers['Authorization'] = auth_header
+                            print(f"Using Authorization header: {auth_header}")
+                        
+                        familiarity_response = requests.post(
+                            f"{DJANGO_BASE_URL}/api/familiarity/", 
+                            json=payload,
+                            headers=headers,
+                            timeout=30  # 增加超時時間到30秒
+                        )
+                        
+                        print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
+                        
+                        if familiarity_response.status_code == 200:
+                            try:
+                                response_data = familiarity_response.json()
+                                familiarity_value = response_data.get("familiarity", 0)
+                                print(f"熟悉度計算成功: {familiarity_value}")
+                            except Exception as parse_error:
+                                print(f"解析熟悉度API回應失敗: {str(parse_error)}")
+                        else:
+                            print(f"熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"背景熟悉度計算失敗: {str(e)}")
+                
+                # 啟動背景執行緒
+                familiarity_thread = threading.Thread(target=calculate_familiarity_async)
+                familiarity_thread.daemon = True  # 設為守護執行緒
+                familiarity_thread.start()
+                
+                print("熟悉度計算已在背景啟動，立即回傳成功訊息")
+                data = "計算中"  # 表示熟悉度正在計算中
 
                 response = Response({
                     "message": "Batch answers submitted successfully",
@@ -1355,45 +1363,55 @@ class SubmitAnswerView(APIView):
                 print(f"=== 傳送到熟悉度 API 的資料 (List格式) ===")
                 print(f"Payload: {payload}")
                 
-                # 改善熟悉度API調用，增加超時和錯誤處理
-                try:
-                    print(f"=== 調用熟悉度 API (List格式) ===")
-                    print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
-                    print(f"Payload: {payload}")
-                    
-                    familiarity_response = requests.post(
-                        f"{DJANGO_BASE_URL}/api/familiarity/", 
-                        json=payload,
-                        timeout=5  # 優化：從30秒減少到5秒，提升響應速度
-                    )
-                    
-                    print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
-                    print(f"熟悉度 API 回應標頭: {dict(familiarity_response.headers)}")
-                    
-                    if familiarity_response.status_code == 200:
-                        try:
-                            response_data = familiarity_response.json()
-                            data = response_data.get("familiarity", 0)
-                            print(f"熟悉度 API 回應內容: {response_data}")
-                            print(f"提取的熟悉度值: {data}")
-                        except Exception as parse_error:
-                            print(f"解析熟悉度API回應失敗: {str(parse_error)}")
-                            print(f"原始回應內容: {familiarity_response.text}")
-                            data = 0
-                    else:
-                        print(f"熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
-                        print(f"錯誤回應內容: {familiarity_response.text}")
-                        data = 0
+                # 非同步處理熟悉度計算，立即回傳成功訊息
+                print(f"=== 非同步處理熟悉度計算 (List格式) ===")
+                print(f"Payload: {payload}")
+                
+                # 在背景執行熟悉度計算，不等待結果
+                import threading
+                
+                def calculate_familiarity_async_list():
+                    try:
+                        print(f"=== 背景執行熟悉度計算 (List格式) ===")
+                        print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
+                        print(f"Payload: {payload}")
                         
-                except requests.exceptions.Timeout:
-                    print("熟悉度 API 調用超時")
-                    data = 0
-                except requests.exceptions.ConnectionError as conn_error:
-                    print(f"熟悉度 API 連接錯誤: {str(conn_error)}")
-                    data = 0
-                except Exception as e:
-                    print(f"呼叫熟悉度 API 失敗: {str(e)}")
-                    data = 0  # 設置默認值
+                        # 獲取當前請求的 Authorization token
+                        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+                        headers = {}
+                        if auth_header:
+                            headers['Authorization'] = auth_header
+                            print(f"Using Authorization header: {auth_header}")
+                        
+                        familiarity_response = requests.post(
+                            f"{DJANGO_BASE_URL}/api/familiarity/", 
+                            json=payload,
+                            headers=headers,
+                            timeout=30  # 增加超時時間到30秒
+                        )
+                        
+                        print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
+                        
+                        if familiarity_response.status_code == 200:
+                            try:
+                                response_data = familiarity_response.json()
+                                familiarity_value = response_data.get("familiarity", 0)
+                                print(f"熟悉度計算成功: {familiarity_value}")
+                            except Exception as parse_error:
+                                print(f"解析熟悉度API回應失敗: {str(parse_error)}")
+                        else:
+                            print(f"熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"背景熟悉度計算失敗: {str(e)}")
+                
+                # 啟動背景執行緒
+                familiarity_thread = threading.Thread(target=calculate_familiarity_async_list)
+                familiarity_thread.daemon = True  # 設為守護執行緒
+                familiarity_thread.start()
+                
+                print("熟悉度計算已在背景啟動，立即回傳成功訊息")
+                data = "計算中"  # 表示熟悉度正在計算中
                 
                 response = Response({
                     "message": "Batch answers submitted successfully",
