@@ -204,22 +204,7 @@ export default function AnalysisOverlay({
             </div>
             {(() => {
               const currentMessages = getCurrentChatRoom();
-              return currentMessages.length === 0 ? (
-                <>
-                  <div className={`${styles.message} ${styles.user}`}>
-                    你打的問題會在這裡
-                  </div>
-                  <div className={`${styles.message} ${styles.placeholder}`}>
-                    <div
-                      className={styles["placeholder-icon"]}
-                      onClick={onOpenAnalysisFavoriteModal}
-                    >
-                      +
-                    </div>
-                    AI的回答在這裡
-                  </div>
-                </>
-              ) : (
+              return currentMessages.length === 0 ? null : (
                 <>
                   {currentMessages.map((m, i) => (
                     <div
