@@ -129,7 +129,11 @@ export default function AnalysisOverlay({
         lines.push(m.content || "");
         lines.push("");
       });
-    } else ｛
+    } else {
+      lines.push("");
+      lines.push("你的問題會在這裡");
+      lines.push("");
+      lines.push("AI的回答在這裡");
     }
 
     return lines.join("\n");
@@ -203,13 +207,16 @@ export default function AnalysisOverlay({
               return currentMessages.length === 0 ? (
                 <>
                   <div className={`${styles.message} ${styles.user}`}>
+                    你打的問題會在這裡
                   </div>
                   <div className={`${styles.message} ${styles.placeholder}`}>
                     <div
                       className={styles["placeholder-icon"]}
                       onClick={onOpenAnalysisFavoriteModal}
                     >
+                      +
                     </div>
+                    AI的回答在這裡
                   </div>
                 </>
               ) : (
