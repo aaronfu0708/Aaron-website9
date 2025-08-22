@@ -18,6 +18,7 @@ import threading
 import asyncio
 from functools import wraps
 from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal
 
 # 資料庫查詢效能監控裝飾器
 def monitor_query_performance(func):
@@ -1115,9 +1116,51 @@ class SubmitAnswerView(APIView):
                 topic.User_answer = user_answer
                 topic.save()
                 Ai_answer = topic.Ai_answer
+                
+                # 新增：為單一題目創建熟悉度記錄
+                try:
+                    print(f"=== 為單一題目創建熟悉度記錄 ===")
+                    quiz_topic_id = topic.quiz_topic.id
+                    difficulty_name = "beginner"  # 單一題目默認使用 beginner 難度
+                    
+                    # 獲取或創建熟悉度記錄
+                    difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                    if not difficulty_level:
+                        difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                    
+                    # 計算正確性
+                    is_correct = (user_answer == Ai_answer)
+                    correct_answers = 1 if is_correct else 0
+                    total_questions = 1
+                    
+                    uf, created = UserFamiliarity.objects.get_or_create(
+                        user=user,
+                        quiz_topic_id=quiz_topic_id,
+                        defaults={
+                            "difficulty_level": difficulty_level,
+                            "total_questions": total_questions,
+                            "correct_answers": correct_answers,
+                            "weighted_total": Decimal('0.00'),
+                            "weighted_correct": Decimal('0.00'),
+                            "cap_weighted_sum": Decimal('0.00'),
+                            "familiarity": Decimal('0.00'),  # 單一題目初始熟悉度為 0%
+                        }
+                    )
+                    
+                    # 如果記錄已存在，更新統計數據
+                    if not created:
+                        uf.total_questions = F('total_questions') + total_questions
+                        uf.correct_answers = F('correct_answers') + correct_answers
+                        uf.save(update_fields=['total_questions', 'correct_answers', 'updated_at'])
+                        uf.refresh_from_db(fields=['total_questions', 'correct_answers'])
+                    
+                    print(f"單一題目熟悉度記錄 {'創建' if created else '更新'} 成功")
+                    
+                except Exception as e:
+                    print(f"為單一題目創建熟悉度記錄失敗: {str(e)}")
+                
                 response = Response({"message": "Answer submitted successfully"}, status=201)
                 return add_cors_headers(response)
-                # 計算總題數與正確數
 
             elif updates:
                 print("=== 進入 updates 分支 ===")
@@ -1188,6 +1231,40 @@ class SubmitAnswerView(APIView):
                 # 判斷是否為 TEST 模式或 error 難度（id=5），直接回傳，不呼叫API
                 if is_test or difficulty_id == 5:
                     message = "Test mode - no API call" if is_test else "Error level - no API call"
+                    
+                    # 新增：即使不調用API，也要確保熟悉度記錄存在
+                    try:
+                        print(f"=== TEST/Error模式：確保熟悉度記錄存在 ===")
+                        # 獲取或創建熟悉度記錄
+                        difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                        if not difficulty_level:
+                            difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                        
+                        uf, created = UserFamiliarity.objects.get_or_create(
+                            user=user,
+                            quiz_topic_id=quiz_topic_id,
+                            defaults={
+                                "difficulty_level": difficulty_level,
+                                "total_questions": total_questions,
+                                "correct_answers": correct_answers,
+                                "weighted_total": Decimal('0.00'),
+                                "weighted_correct": Decimal('0.00'),
+                                "cap_weighted_sum": Decimal('0.00'),
+                                "familiarity": Decimal('0.00'),  # TEST/Error模式熟悉度為 0%
+                            }
+                        )
+                        
+                        # 如果記錄已存在，更新統計數據
+                        if not created:
+                            uf.total_questions = F('total_questions') + total_questions
+                            uf.correct_answers = F('correct_answers') + correct_answers
+                            uf.save(update_fields=['total_questions', 'correct_answers', 'updated_at'])
+                        
+                        print(f"TEST/Error模式熟悉度記錄 {'創建' if created else '更新'} 成功")
+                        
+                    except Exception as e:
+                        print(f"TEST/Error模式創建熟悉度記錄失敗: {str(e)}")
+                    
                     response = Response({
                         "message": f"Batch answers submitted successfully ({message})",
                         "total_questions": total_questions,
@@ -1248,6 +1325,39 @@ class SubmitAnswerView(APIView):
                 except Exception as e:
                     print(f"呼叫熟悉度 API 失敗: {str(e)}")
                     data = 0  # 設置默認值
+
+                # 新增：確保熟悉度記錄存在，即使API調用失敗
+                try:
+                    print(f"=== 確保熟悉度記錄存在 ===")
+                    # 獲取或創建熟悉度記錄
+                    difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                    if not difficulty_level:
+                        difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                    
+                    uf, created = UserFamiliarity.objects.get_or_create(
+                        user=user,
+                        quiz_topic_id=quiz_topic_id,
+                        defaults={
+                            "difficulty_level": difficulty_level,
+                            "total_questions": total_questions,
+                            "correct_answers": correct_answers,
+                            "weighted_total": Decimal('0.00'),
+                            "weighted_correct": Decimal('0.00'),
+                            "cap_weighted_sum": Decimal('0.00'),
+                            "familiarity": Decimal(str(data)),  # 使用 API 返回的值或 0
+                        }
+                    )
+                    
+                    # 如果記錄已存在，更新熟悉度
+                    if not created:
+                        uf.familiarity = Decimal(str(data))
+                        uf.save(update_fields=['familiarity', 'updated_at'])
+                    
+                    print(f"熟悉度記錄 {'創建' if created else '更新'} 成功: {uf.familiarity}%")
+                    
+                except Exception as e:
+                    print(f"創建熟悉度記錄失敗: {str(e)}")
+                    data = 0
 
                 response = Response({
                     "message": "Batch answers submitted successfully",
@@ -1343,6 +1453,40 @@ class SubmitAnswerView(APIView):
                 # 判斷是否為 TEST 模式或 error 難度（id=5），直接回傳，不呼叫API
                 if is_test or difficulty_id == 5:
                     message = "Test mode - no API call" if is_test else "Error level - no API call"
+                    
+                    # 新增：即使不調用API，也要確保熟悉度記錄存在
+                    try:
+                        print(f"=== TEST/Error模式：確保熟悉度記錄存在 (List格式) ===")
+                        # 獲取或創建熟悉度記錄
+                        difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                        if not difficulty_level:
+                            difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                        
+                        uf, created = UserFamiliarity.objects.get_or_create(
+                            user=user,
+                            quiz_topic_id=quiz_topic_id,
+                            defaults={
+                                "difficulty_level": difficulty_level,
+                                "total_questions": total_questions,
+                                "correct_answers": correct_answers,
+                                "weighted_total": Decimal('0.00'),
+                                "weighted_correct": Decimal('0.00'),
+                                "cap_weighted_sum": Decimal('0.00'),
+                                "familiarity": Decimal('0.00'),  # TEST/Error模式熟悉度為 0%
+                            }
+                        )
+                        
+                        # 如果記錄已存在，更新統計數據
+                        if not created:
+                            uf.total_questions = F('total_questions') + total_questions
+                            uf.correct_answers = F('correct_answers') + correct_answers
+                            uf.save(update_fields=['total_questions', 'correct_answers', 'updated_at'])
+                        
+                        print(f"TEST/Error模式熟悉度記錄 {'創建' if created else '更新'} 成功 (List格式)")
+                        
+                    except Exception as e:
+                        print(f"TEST/Error模式創建熟悉度記錄失敗 (List格式): {str(e)}")
+                    
                     response = Response({
                         "message": f"Batch answers submitted successfully ({message})",
                         "total_questions": total_questions,
@@ -1394,6 +1538,39 @@ class SubmitAnswerView(APIView):
                 except Exception as e:
                     print(f"呼叫熟悉度 API 失敗: {str(e)}")
                     data = 0  # 設置默認值
+
+                # 新增：確保熟悉度記錄存在，即使API調用失敗
+                try:
+                    print(f"=== 確保熟悉度記錄存在 (List格式) ===")
+                    # 獲取或創建熟悉度記錄
+                    difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                    if not difficulty_level:
+                        difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                    
+                    uf, created = UserFamiliarity.objects.get_or_create(
+                        user=user,
+                        quiz_topic_id=quiz_topic_id,
+                        defaults={
+                            "difficulty_level": difficulty_level,
+                            "total_questions": total_questions,
+                            "correct_answers": correct_answers,
+                            "weighted_total": Decimal('0.00'),
+                            "weighted_correct": Decimal('0.00'),
+                            "cap_weighted_sum": Decimal('0.00'),
+                            "familiarity": Decimal(str(data)),  # 使用 API 返回的值或 0
+                        }
+                    )
+                    
+                    # 如果記錄已存在，更新熟悉度
+                    if not created:
+                        uf.familiarity = Decimal(str(data))
+                        uf.save(update_fields=['familiarity', 'updated_at'])
+                    
+                    print(f"熟悉度記錄 {'創建' if created else '更新'} 成功: {uf.familiarity}%")
+                    
+                except Exception as e:
+                    print(f"創建熟悉度記錄失敗: {str(e)}")
+                    data = 0
                 
                 response = Response({
                     "message": "Batch answers submitted successfully",
