@@ -83,12 +83,87 @@ export default function NotePage() {
     }
   }, []);
 
+  // 使用 useMemo 優化筆記內容處理，避免每次渲染都重新處理
+  const processedNotes = useMemo(() => {
+    return notes.map(note => ({
+      ...note,
+      cleanedContent: cleanTextContent(note.content),
+      parsedContent: parseMarkdown(cleanTextContent(note.content))
+    }));
+  }, [notes]);
+
   // 使用 useMemo 優化當前主題筆記的計算，避免每次渲染都重新計算
   const currentSubjectNotes = useMemo(() => {
-    return Array.isArray(notes)
-      ? notes.filter((note) => note.subject === currentSubject)
+    return Array.isArray(processedNotes)
+      ? processedNotes.filter((note) => note.subject === currentSubject)
       : [];
-  }, [notes, currentSubject]);
+  }, [processedNotes, currentSubject]);
+
+  // 渲染筆記卡片
+  const renderNoteCard = (note) => {
+    // 使用已處理的內容，避免重複處理
+    const processedNote = processedNotes.find(n => n.id === note.id) || note;
+    const cleanedContent = processedNote.cleanedContent || cleanTextContent(note.content);
+    const parsedContent = processedNote.parsedContent || parseMarkdown(cleanedContent);
+
+    return (
+      <article key={note.id} className={styles.noteCard} data-note-id={note.id}>
+        <div className={styles.cardContent}>
+          <h3 className={styles.noteTitle}>{note.title}</h3>
+          <div
+            className={styles.noteText}
+            dangerouslySetInnerHTML={{ __html: parsedContent }}
+          />
+        </div>
+
+        <div className={styles.addButton}>
+          <div
+            className={styles.generateButton}
+            onClick={() => handleGenerateQuestions(note)}
+          >
+            <span className={styles.arrowUp}>↑</span>
+            <span className={styles.generateText}>生成題目</span>
+          </div>
+          <span
+            className={styles.addPlus}
+            onClick={() => toggleActionBar(note.id)}
+          >
+            <Image src="/img/Vector-31.png" alt="Add" width={15} height={15} />
+          </span>
+          <div
+            className={`${styles.actionBar} ${
+              activeActionBar === note.id ? styles.active : ""
+            }`}
+          >
+            <span
+              className={styles.actionItem}
+              onClick={() => handleDeleteNote(note)}
+            >
+              刪除
+            </span>
+            <span
+              className={styles.actionItem}
+              onClick={() => handleMoveNote(note)}
+            >
+              搬移
+            </span>
+            <span
+              className={styles.actionItem}
+              onClick={() => handleViewNote(note)}
+            >
+              查看
+            </span>
+            <span
+              className={styles.actionItem}
+              onClick={() => handleEditNote(note)}
+            >
+              編輯
+            </span>
+          </div>
+        </div>
+      </article>
+    );
+  };
 
   // 客戶端初始化
   useEffect(() => {
@@ -784,70 +859,6 @@ export default function NotePage() {
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
-
-  // 渲染筆記卡片
-  const renderNoteCard = (note) => {
-    const cleanedContent = cleanTextContent(note.content);
-    const parsedContent = parseMarkdown(cleanedContent);
-
-    return (
-      <article key={note.id} className={styles.noteCard} data-note-id={note.id}>
-        <div className={styles.cardContent}>
-          <h3 className={styles.noteTitle}>{note.title}</h3>
-          <div
-            className={styles.noteText}
-            dangerouslySetInnerHTML={{ __html: parsedContent }}
-          />
-        </div>
-
-        <div className={styles.addButton}>
-          <div
-            className={styles.generateButton}
-            onClick={() => handleGenerateQuestions(note)}
-          >
-            <span className={styles.arrowUp}>↑</span>
-            <span className={styles.generateText}>生成題目</span>
-          </div>
-          <span
-            className={styles.addPlus}
-            onClick={() => toggleActionBar(note.id)}
-          >
-            <Image src="/img/Vector-31.png" alt="Add" width={15} height={15} />
-          </span>
-          <div
-            className={`${styles.actionBar} ${
-              activeActionBar === note.id ? styles.active : ""
-            }`}
-          >
-            <span
-              className={styles.actionItem}
-              onClick={() => handleDeleteNote(note)}
-            >
-              刪除
-            </span>
-            <span
-              className={styles.actionItem}
-              onClick={() => handleMoveNote(note)}
-            >
-              搬移
-            </span>
-            <span
-              className={styles.actionItem}
-              onClick={() => handleViewNote(note)}
-            >
-              查看
-            </span>
-            <span
-              className={styles.actionItem}
-              onClick={() => handleEditNote(note)}
-            >
-              編輯
-            </span>
-          </div>
-        </div>
-      </article>
-    );
-  };
 
   // 渲染模態框
   const renderModal = () => {
