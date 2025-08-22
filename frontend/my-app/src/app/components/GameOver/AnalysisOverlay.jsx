@@ -129,9 +129,7 @@ export default function AnalysisOverlay({
         lines.push(m.content || "");
         lines.push("");
       });
-    } else {
-      lines.push("");
-      lines.push("");
+    } else ｛
     }
 
     return lines.join("\n");
@@ -205,14 +203,12 @@ export default function AnalysisOverlay({
               return currentMessages.length === 0 ? (
                 <>
                   <div className={`${styles.message} ${styles.user}`}>
-                    
                   </div>
                   <div className={`${styles.message} ${styles.placeholder}`}>
                     <div
                       className={styles["placeholder-icon"]}
                       onClick={onOpenAnalysisFavoriteModal}
                     >
-                      +
                     </div>
                   </div>
                 </>
