@@ -121,9 +121,9 @@ DATABASES = {
             "sql_mode": "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO",
             "charset": "utf8mb4",
             "use_unicode": True,
-            "connect_timeout": 10,
-            "read_timeout": 30,
-            "write_timeout": 30,
+            "connect_timeout": 3,   # 優化：從10秒減少到3秒，提升連接速度
+            "read_timeout": 10,     # 優化：從30秒減少到10秒，提升讀取速度
+            "write_timeout": 10,    # 優化：從30秒減少到10秒，提升寫入速度
         } if os.getenv('DB_ENGINE') == 'django.db.backends.mysql' else {},
         # 資料庫連接池設定
         "CONN_MAX_AGE": 600 if os.getenv('DB_ENGINE') == 'django.db.backends.mysql' else 60,  # 連接最大存活時間（秒）

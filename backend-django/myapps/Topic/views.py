@@ -1218,7 +1218,7 @@ class SubmitAnswerView(APIView):
                         f"{DJANGO_BASE_URL}/api/familiarity/", 
                         json=payload,
                         headers=headers,
-                        timeout=30  # 增加30秒超時
+                        timeout=5  # 優化：從30秒減少到5秒，提升響應速度
                     )
                     
                     print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
@@ -1364,7 +1364,7 @@ class SubmitAnswerView(APIView):
                     familiarity_response = requests.post(
                         f"{DJANGO_BASE_URL}/api/familiarity/", 
                         json=payload,
-                        timeout=30  # 增加30秒超時
+                        timeout=5  # 優化：從30秒減少到5秒，提升響應速度
                     )
                     
                     print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
