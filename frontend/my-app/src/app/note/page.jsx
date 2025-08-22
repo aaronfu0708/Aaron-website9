@@ -705,20 +705,14 @@ export default function NotePage() {
         sessionStorage.setItem("generatedTopicSource", "note");
         sessionStorage.setItem("generatedTopicNoteId", note.id);
         
-        // 顯示成功訊息
-        safeAlert("✅ 主題生成成功！正在跳轉...");
-        
-        // 延遲跳轉，讓用戶看到成功訊息
-        setTimeout(() => {
-          window.location.href = "/homegame";
-        }, 1000);
+        // 直接跳轉到homegame頁面
+        window.location.href = "/homegame";
         
       } else {
         safeAlert(`❌ 生成主題失敗：${result.message}`);
       }
       
     } catch (error) {
-      console.error("生成主題時發生錯誤:", error);
       safeAlert("❌ 生成主題失敗，請稍後再試");
     }
   }, [checkPlusSubscription, showUpgradeAlert]);

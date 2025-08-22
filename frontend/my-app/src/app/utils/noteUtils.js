@@ -746,45 +746,27 @@ export async function generateQuestions(noteContent, noteTitle = '') {
       return { success: false, message: "筆記內容無效或為空！" };
     }
 
-    // 創建 AbortController 用於超時控制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超時
+    // 調用後端AI API生成主題
+    const res = await fetch(API_ENDPOINTS.ML_SERVICE.GENERATE_TOPIC_FROM_NOTE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`, // 添加認證
+      },
+      body: JSON.stringify({
+        note_content: noteContent.trim(),
+        note_title: noteTitle.trim(),
+      }),
+    });
 
-    try {
-      // 調用後端AI API生成主題
-      const res = await fetch(API_ENDPOINTS.ML_SERVICE.GENERATE_TOPIC_FROM_NOTE, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // 添加認證
-        },
-        body: JSON.stringify({
-          note_content: noteContent.trim(),
-          note_title: noteTitle.trim(),
-        }),
-        signal: controller.signal, // 添加超時控制
-      });
-
-      clearTimeout(timeoutId); // 清除超時計時器
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        return { success: false, message: `AI生成失敗：${res.status}` };
-      }
-
-      const result = await res.json();
-      return { success: true, topic: result.topic, message: "主題生成成功！" };
-    } catch (fetchError) {
-      clearTimeout(timeoutId); // 清除超時計時器
-      
-      if (fetchError.name === 'AbortError') {
-        return { success: false, message: "請求超時，請檢查網路連接或稍後再試！" };
-      }
-      
-      throw fetchError; // 重新拋出其他錯誤
+    if (!res.ok) {
+      const errorText = await res.text();
+      return { success: false, message: `AI生成失敗：${res.status}` };
     }
+
+    const result = await res.json();
+    return { success: true, topic: result.topic, message: "主題生成成功！" };
   } catch (error) {
-    console.error("生成主題時發生錯誤:", error);
     return { success: false, message: "生成失敗，請稍後再試！" };
   }
 }
