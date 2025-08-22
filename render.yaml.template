@@ -5,7 +5,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r backend-django/requirements.txt
-    startCommand: cd backend-django && gunicorn myapps.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    startCommand: cd backend-django && gunicorn myapps.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 30
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
