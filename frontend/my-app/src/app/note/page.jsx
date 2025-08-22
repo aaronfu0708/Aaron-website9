@@ -59,7 +59,17 @@ export default function NotePage() {
   const LOCAL_STORAGE_NOTES_KEY = 'notes_cache';
   const LOCAL_STORAGE_SUBJECTS_KEY = 'subjects_cache';
   const LOCAL_STORAGE_TIMESTAMP_KEY = 'notes_timestamp';
+  const LOCAL_STORAGE_CURRENT_SUBJECT_KEY = 'current_subject'; // 新增：保存當前主題
   const CACHE_DURATION = 300000; // 5分鐘緩存時間
+
+  // 新增：保存當前主題到localStorage
+  const saveCurrentSubject = useCallback((subject) => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_CURRENT_SUBJECT_KEY, JSON.stringify(subject));
+    } catch (error) {
+      // 靜默處理保存失敗
+    }
+  }, []);
 
   // 新增：更新本地緩存函數
   const updateLocalCache = useCallback((newNotes, newSubjects) => {
@@ -247,6 +257,13 @@ export default function NotePage() {
     };
   }, [isClient, currentSubject]);
 
+  // 監聽 currentSubject 變化，自動保存到 localStorage
+  useEffect(() => {
+    if (currentSubject && currentSubject.trim() !== '') {
+      saveCurrentSubject(currentSubject);
+    }
+  }, [currentSubject, saveCurrentSubject]);
+
   // 初始化數據 - 優化為只調用一次API
   useEffect(() => {
     if (!isClient) return; // 確保只在客戶端執行
@@ -258,19 +275,23 @@ export default function NotePage() {
           const cachedNotes = localStorage.getItem(LOCAL_STORAGE_NOTES_KEY);
           const cachedSubjects = localStorage.getItem(LOCAL_STORAGE_SUBJECTS_KEY);
           const cachedTimestamp = localStorage.getItem(LOCAL_STORAGE_TIMESTAMP_KEY);
+          const cachedCurrentSubject = localStorage.getItem(LOCAL_STORAGE_CURRENT_SUBJECT_KEY);
           
-          if (cachedNotes && cachedSubjects && cachedTimestamp) {
+          if (cachedNotes && cachedSubjects && cachedTimestamp && cachedCurrentSubject) {
             const age = Date.now() - parseInt(cachedTimestamp);
             if (age < CACHE_DURATION) {
               // 緩存有效，立即顯示
               const parsedNotes = JSON.parse(cachedNotes);
               const parsedSubjects = JSON.parse(cachedSubjects);
+              const parsedCurrentSubject = JSON.parse(cachedCurrentSubject);
               
               setNotes(parsedNotes);
               setSubjects(parsedSubjects);
+              setCurrentSubject(parsedCurrentSubject);
               
               if (parsedSubjects.length > 0) {
-                if (!parsedSubjects.includes(currentSubject)) {
+                // 優先使用保存的主題，只有在保存的主題無效時才重置
+                if (!parsedSubjects.includes(parsedCurrentSubject)) {
                   setCurrentSubject(parsedSubjects[0]);
                 }
               }
@@ -300,7 +321,11 @@ export default function NotePage() {
         setSubjects(subjectsData);
 
         if (subjectsData.length > 0) {
-          if (!subjectsData.includes(currentSubject)) {
+          // 優先使用保存的主題，只有在保存的主題無效時才重置
+          const savedCurrentSubject = localStorage.getItem(LOCAL_STORAGE_CURRENT_SUBJECT_KEY);
+          if (savedCurrentSubject && subjectsData.includes(JSON.parse(savedCurrentSubject))) {
+            setCurrentSubject(JSON.parse(savedCurrentSubject));
+          } else if (!subjectsData.includes(currentSubject)) {
             setCurrentSubject(subjectsData[0]);
           }
         } else {
@@ -323,9 +348,16 @@ export default function NotePage() {
   // subjects 更新後，自動選定可用主題，避免初次進頁 currentSubject 為空而不渲染
   useEffect(() => {
     if (subjects.length === 0) return;
-    setCurrentSubject((prev) =>
-      prev && subjects.includes(prev) ? prev : subjects[0]
-    );
+    
+    // 優先使用保存的主題，只有在保存的主題無效時才重置
+    const savedCurrentSubject = localStorage.getItem(LOCAL_STORAGE_CURRENT_SUBJECT_KEY);
+    if (savedCurrentSubject && subjects.includes(JSON.parse(savedCurrentSubject))) {
+      setCurrentSubject(JSON.parse(savedCurrentSubject));
+    } else {
+      setCurrentSubject((prev) =>
+        prev && subjects.includes(prev) ? prev : subjects[0]
+      );
+    }
   }, [subjects]);
 
   // 檢查是否為Plus用戶 - 使用 useCallback 優化
