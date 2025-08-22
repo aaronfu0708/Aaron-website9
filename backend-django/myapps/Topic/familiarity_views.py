@@ -1,8 +1,12 @@
 # apps/learning/views.py
+from django.shortcuts import render
+from django.http import JsonResponse
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .services import update_familiarity_weighted_average
+from rest_framework.response import Response
+from .models import DifficultyLevels, UserFamiliarity
+from .serializers import QuizSimplifiedSerializer
+from .services import update_familiarity_weighted_average, update_familiarity_weighted_average_optimized
 from .models import DifficultyLevels , UserFamiliarity , Quiz
 from .serializers import UserFamiliaritySerializer ,QuizSimplifiedSerializer ,QuizSerializer
 from django.core.validators import MinValueValidator
@@ -91,8 +95,8 @@ class SubmitAttemptView(APIView):
             if current_uf and current_uf.familiarity >= cap_pct:
                 already_reached_cap = True
 
-            # 呼叫服務函數
-            new_fam = update_familiarity_weighted_average(
+            # 呼叫服務函數（使用優化版本提升性能）
+            new_fam = update_familiarity_weighted_average_optimized(
                 user=request.user,
                 quiz_topic_id=quiz_topic_id,
                 difficulty_level_name=difficulty_level_name,
