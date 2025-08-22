@@ -1284,88 +1284,97 @@ class SubmitAnswerView(APIView):
                     headers['Authorization'] = auth_header
                     print(f"Using Authorization header: {auth_header}")
                 
-                # 改善熟悉度API調用，增加超時和錯誤處理
-                try:
-                    print(f"=== 調用熟悉度 API ===")
-                    print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
-                    print(f"Payload: {payload}")
-                    print(f"Headers: {headers}")
-                    
-                    familiarity_response = requests.post(
-                        f"{DJANGO_BASE_URL}/api/familiarity/", 
-                        json=payload,
-                        headers=headers,
-                        timeout=5  # 優化：從30秒減少到5秒，提升響應速度
-                    )
-                    
-                    print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
-                    print(f"熟悉度 API 回應標頭: {dict(familiarity_response.headers)}")
-                    
-                    if familiarity_response.status_code == 200:
-                        try:
-                            response_data = familiarity_response.json()
-                            data = response_data.get("familiarity", 0)
-                            print(f"熟悉度 API 回應內容: {response_data}")
-                            print(f"提取的熟悉度值: {data}")
-                        except Exception as parse_error:
-                            print(f"解析熟悉度API回應失敗: {str(parse_error)}")
-                            print(f"原始回應內容: {familiarity_response.text}")
-                            data = 0
-                    else:
-                        print(f"熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
-                        print(f"錯誤回應內容: {familiarity_response.text}")
-                        data = 0
-                        
-                except requests.exceptions.Timeout:
-                    print("熟悉度 API 調用超時")
-                    data = 0
-                except requests.exceptions.ConnectionError as conn_error:
-                    print(f"熟悉度 API 連接錯誤: {str(conn_error)}")
-                    data = 0
-                except Exception as e:
-                    print(f"呼叫熟悉度 API 失敗: {str(e)}")
-                    data = 0  # 設置默認值
-
-                # 新增：確保熟悉度記錄存在，即使API調用失敗
-                try:
-                    print(f"=== 確保熟悉度記錄存在 ===")
-                    # 獲取或創建熟悉度記錄
-                    difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
-                    if not difficulty_level:
-                        difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
-                    
-                    uf, created = UserFamiliarity.objects.get_or_create(
-                        user=user,
-                        quiz_topic_id=quiz_topic_id,
-                        defaults={
-                            "difficulty_level": difficulty_level,
-                            "total_questions": total_questions,
-                            "correct_answers": correct_answers,
-                            "weighted_total": Decimal('0.00'),
-                            "weighted_correct": Decimal('0.00'),
-                            "cap_weighted_sum": Decimal('0.00'),
-                            "familiarity": Decimal(str(data)),  # 使用 API 返回的值或 0
-                        }
-                    )
-                    
-                    # 如果記錄已存在，更新熟悉度
-                    if not created:
-                        uf.familiarity = Decimal(str(data))
-                        uf.save(update_fields=['familiarity', 'updated_at'])
-                    
-                    print(f"熟悉度記錄 {'創建' if created else '更新'} 成功: {uf.familiarity}%")
-                    
-                except Exception as e:
-                    print(f"創建熟悉度記錄失敗: {str(e)}")
-                    data = 0
-
+                # 優化：改為異步後台處理熟悉度計算，不阻塞遊戲流程
+                # 立即返回響應，讓前端可以跳轉到gameover頁面
                 response = Response({
                     "message": "Batch answers submitted successfully",
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
-                    "familiarity": data,  # 改為 "familiarity" 匹配前端期望
-                    "familiarity_api_response": data  # 保留這個作為備用
+                    "familiarity": "processing",  # 表示正在後台計算中
+                    "status": "submitted"
                 }, status=201)
+                
+                # 在後台線程中異步計算熟悉度，不影響用戶體驗
+                def background_familiarity_calculation():
+                    """後台異步計算熟悉度，不阻塞主流程"""
+                    try:
+                        print(f"=== 後台異步調用熟悉度 API ===")
+                        print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
+                        print(f"Payload: {payload}")
+                        print(f"Headers: {headers}")
+                        
+                        # 後台計算不設超時，讓它慢慢算
+                        familiarity_response = requests.post(
+                            f"{DJANGO_BASE_URL}/api/familiarity/", 
+                            json=payload,
+                            headers=headers
+                            # 移除超時限制，讓熟悉度API有足夠時間計算
+                        )
+                        
+                        print(f"後台熟悉度 API 回應狀態: {familiarity_response.status_code}")
+                        print(f"後台熟悉度 API 回應標頭: {dict(familiarity_response.headers)}")
+                        
+                        if familiarity_response.status_code == 200:
+                            try:
+                                response_data = familiarity_response.json()
+                                data = response_data.get("familiarity", 0)
+                                print(f"後台熟悉度 API 回應內容: {response_data}")
+                                print(f"後台提取的熟悉度值: {data}")
+                            except Exception as parse_error:
+                                print(f"後台解析熟悉度API回應失敗: {str(parse_error)}")
+                                print(f"後台原始回應內容: {familiarity_response.text}")
+                                data = 0
+                        else:
+                            print(f"後台熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
+                            print(f"後台錯誤回應內容: {familiarity_response.text}")
+                            data = 0
+                            
+                    except requests.exceptions.Timeout:
+                        print("後台熟悉度 API 調用超時（但用戶已跳轉，不影響體驗）")
+                        data = 0
+                    except requests.exceptions.ConnectionError as conn_error:
+                        print(f"後台熟悉度 API 連接錯誤: {str(conn_error)}")
+                        data = 0
+                    except Exception as e:
+                        print(f"後台呼叫熟悉度 API 失敗: {str(e)}")
+                        data = 0
+
+                    # 後台更新熟悉度記錄到資料庫
+                    try:
+                        print(f"=== 後台更新熟悉度記錄 ===")
+                        difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                        if not difficulty_level:
+                            difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                        
+                        uf, created = UserFamiliarity.objects.get_or_create(
+                            user=user,
+                            quiz_topic_id=quiz_topic_id,
+                            defaults={
+                                "difficulty_level": difficulty_level,
+                                "total_questions": total_questions,
+                                "correct_answers": correct_answers,
+                                "weighted_total": Decimal('0.00'),
+                                "weighted_correct": Decimal('0.00'),
+                                "cap_weighted_sum": Decimal('0.00'),
+                                "familiarity": Decimal(str(data)),  # 使用後台計算的結果
+                            }
+                        )
+                        
+                        # 如果記錄已存在，更新熟悉度
+                        if not created:
+                            uf.familiarity = Decimal(str(data))
+                            uf.save(update_fields=['familiarity', 'updated_at'])
+                        
+                        print(f"後台熟悉度記錄 {'創建' if created else '更新'} 成功: {uf.familiarity}%")
+                        
+                    except Exception as e:
+                        print(f"後台創建熟悉度記錄失敗: {str(e)}")
+                        # 靜默處理錯誤，不影響用戶體驗
+
+                # 啟動後台線程，讓熟悉度計算在背景進行
+                print("啟動後台熟悉度計算線程...")
+                threading.Thread(target=background_familiarity_calculation, daemon=True).start()
+                
                 return response
             
             # 優化：批量處理陣列格式 [{"id": 276, "user_answer": "A"}]
@@ -1499,86 +1508,95 @@ class SubmitAnswerView(APIView):
                 print(f"=== 傳送到熟悉度 API 的資料 (List格式) ===")
                 print(f"Payload: {payload}")
                 
-                # 改善熟悉度API調用，增加超時和錯誤處理
-                try:
-                    print(f"=== 調用熟悉度 API (List格式) ===")
-                    print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
-                    print(f"Payload: {payload}")
-                    
-                    familiarity_response = requests.post(
-                        f"{DJANGO_BASE_URL}/api/familiarity/", 
-                        json=payload,
-                        timeout=5  # 優化：從30秒減少到5秒，提升響應速度
-                    )
-                    
-                    print(f"熟悉度 API 回應狀態: {familiarity_response.status_code}")
-                    print(f"熟悉度 API 回應標頭: {dict(familiarity_response.headers)}")
-                    
-                    if familiarity_response.status_code == 200:
-                        try:
-                            response_data = familiarity_response.json()
-                            data = response_data.get("familiarity", 0)
-                            print(f"熟悉度 API 回應內容: {response_data}")
-                            print(f"提取的熟悉度值: {data}")
-                        except Exception as parse_error:
-                            print(f"解析熟悉度API回應失敗: {str(parse_error)}")
-                            print(f"原始回應內容: {familiarity_response.text}")
-                            data = 0
-                    else:
-                        print(f"熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
-                        print(f"錯誤回應內容: {familiarity_response.text}")
-                        data = 0
-                        
-                except requests.exceptions.Timeout:
-                    print("熟悉度 API 調用超時")
-                    data = 0
-                except requests.exceptions.ConnectionError as conn_error:
-                    print(f"熟悉度 API 連接錯誤: {str(conn_error)}")
-                    data = 0
-                except Exception as e:
-                    print(f"呼叫熟悉度 API 失敗: {str(e)}")
-                    data = 0  # 設置默認值
-
-                # 新增：確保熟悉度記錄存在，即使API調用失敗
-                try:
-                    print(f"=== 確保熟悉度記錄存在 (List格式) ===")
-                    # 獲取或創建熟悉度記錄
-                    difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
-                    if not difficulty_level:
-                        difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
-                    
-                    uf, created = UserFamiliarity.objects.get_or_create(
-                        user=user,
-                        quiz_topic_id=quiz_topic_id,
-                        defaults={
-                            "difficulty_level": difficulty_level,
-                            "total_questions": total_questions,
-                            "correct_answers": correct_answers,
-                            "weighted_total": Decimal('0.00'),
-                            "weighted_correct": Decimal('0.00'),
-                            "cap_weighted_sum": Decimal('0.00'),
-                            "familiarity": Decimal(str(data)),  # 使用 API 返回的值或 0
-                        }
-                    )
-                    
-                    # 如果記錄已存在，更新熟悉度
-                    if not created:
-                        uf.familiarity = Decimal(str(data))
-                        uf.save(update_fields=['familiarity', 'updated_at'])
-                    
-                    print(f"熟悉度記錄 {'創建' if created else '更新'} 成功: {uf.familiarity}%")
-                    
-                except Exception as e:
-                    print(f"創建熟悉度記錄失敗: {str(e)}")
-                    data = 0
-                
+                # 優化：改為異步後台處理熟悉度計算，不阻塞遊戲流程
+                # 立即返回響應，讓前端可以跳轉到gameover頁面
                 response = Response({
                     "message": "Batch answers submitted successfully",
                     "total_questions": total_questions,
                     "correct_answers": correct_answers,
-                    "familiarity": data,  # 改為 "familiarity" 匹配前端期望
-                    "familiarity_api_response": data  # 保留這個作為備用
+                    "familiarity": "processing",  # 表示正在後台計算中
+                    "status": "submitted"
                 }, status=201)
+                
+                # 在後台線程中異步計算熟悉度，不影響用戶體驗
+                def background_familiarity_calculation_list():
+                    """後台異步計算熟悉度（List格式），不阻塞主流程"""
+                    try:
+                        print(f"=== 後台異步調用熟悉度 API (List格式) ===")
+                        print(f"URL: {DJANGO_BASE_URL}/api/familiarity/")
+                        print(f"Payload: {payload}")
+                        
+                        # 後台計算不設超時，讓它慢慢算
+                        familiarity_response = requests.post(
+                            f"{DJANGO_BASE_URL}/api/familiarity/", 
+                            json=payload
+                            # 移除超時限制，讓熟悉度API有足夠時間計算
+                        )
+                        
+                        print(f"後台熟悉度 API 回應狀態: {familiarity_response.status_code}")
+                        print(f"後台熟悉度 API 回應標頭: {dict(familiarity_response.headers)}")
+                        
+                        if familiarity_response.status_code == 200:
+                            try:
+                                response_data = familiarity_response.json()
+                                data = response_data.get("familiarity", 0)
+                                print(f"後台熟悉度 API 回應內容: {response_data}")
+                                print(f"後台提取的熟悉度值: {data}")
+                            except Exception as parse_error:
+                                print(f"後台解析熟悉度API回應失敗: {str(parse_error)}")
+                                print(f"後台原始回應內容: {familiarity_response.text}")
+                                data = 0
+                        else:
+                            print(f"後台熟悉度 API 返回錯誤狀態碼: {familiarity_response.status_code}")
+                            print(f"後台錯誤回應內容: {familiarity_response.text}")
+                            data = 0
+                            
+                    except requests.exceptions.Timeout:
+                        print("後台熟悉度 API 調用超時（但用戶已跳轉，不影響體驗）")
+                        data = 0
+                    except requests.exceptions.ConnectionError as conn_error:
+                        print(f"後台熟悉度 API 連接錯誤: {str(conn_error)}")
+                        data = 0
+                    except Exception as e:
+                        print(f"後台呼叫熟悉度 API 失敗: {str(e)}")
+                        data = 0
+
+                    # 後台更新熟悉度記錄到資料庫
+                    try:
+                        print(f"=== 後台更新熟悉度記錄 (List格式) ===")
+                        difficulty_level = DifficultyLevels.objects.filter(level_name=difficulty_name).first()
+                        if not difficulty_level:
+                            difficulty_level = DifficultyLevels.objects.filter(level_name="beginner").first()
+                        
+                        uf, created = UserFamiliarity.objects.get_or_create(
+                            user=user,
+                            quiz_topic_id=quiz_topic_id,
+                            defaults={
+                                "difficulty_level": difficulty_level,
+                                "total_questions": total_questions,
+                                "correct_answers": correct_answers,
+                                "weighted_total": Decimal('0.00'),
+                                "weighted_correct": Decimal('0.00'),
+                                "cap_weighted_sum": Decimal('0.00'),
+                                "familiarity": Decimal(str(data)),  # 使用後台計算的結果
+                            }
+                        )
+                        
+                        # 如果記錄已存在，更新熟悉度
+                        if not created:
+                            uf.familiarity = Decimal(str(data))
+                            uf.save(update_fields=['familiarity', 'updated_at'])
+                        
+                        print(f"後台熟悉度記錄 {'創建' if created else '更新'} 成功: {uf.familiarity}%")
+                        
+                    except Exception as e:
+                        print(f"後台創建熟悉度記錄失敗: {str(e)}")
+                        # 靜默處理錯誤，不影響用戶體驗
+
+                # 啟動後台線程，讓熟悉度計算在背景進行
+                print("啟動後台熟悉度計算線程 (List格式)...")
+                threading.Thread(target=background_familiarity_calculation_list, daemon=True).start()
+                
                 return response
             
             else:
