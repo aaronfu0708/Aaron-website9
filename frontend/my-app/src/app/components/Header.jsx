@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 
 export default function Header({ 
     showMenu = false, 
@@ -11,25 +11,15 @@ export default function Header({
     showAuthNav = false,
     enableNoteQLink = false 
 }) {
-    const clickTimeoutRef = useRef(null);
-    
     const handleMenuClick = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        
-        // 清除之前的超時
-        if (clickTimeoutRef.current) {
-            clearTimeout(clickTimeoutRef.current);
+        // 直接調用，讓頁面組件的防抖機制處理
+        // 移除內部防抖，避免與頁面組件的防抖機制衝突
+        if (onToggleMenu) {
+            onToggleMenu();
         }
-        
-        // 設置新的超時，防止重複點擊
-        clickTimeoutRef.current = setTimeout(() => {
-            if (onToggleMenu) {
-                onToggleMenu();
-            }
-            clickTimeoutRef.current = null;
-        }, 150); // 增加到150ms，提供更强的防抖
     }, [onToggleMenu]);
     
     return (
