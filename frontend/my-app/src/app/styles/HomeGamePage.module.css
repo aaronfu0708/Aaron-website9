@@ -145,12 +145,13 @@
     font-size: 16px;
     letter-spacing: 2px;
     outline: none;
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
     color: var(--text-color);
 }
 
 .topicInput:focus {
-    transform: translateX(50%) scale(1.04);
+    /* 参考题数输入框，移除所有transform效果 */
+    transform: translateX(50%);
 }
 
 .topicInput::placeholder {
@@ -174,11 +175,12 @@
     box-shadow: 0px 0px 16px 0px var(--shadow-white);
     border: 2px solid transparent;
     font-size: 20px;
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .challengeStartForm:focus-within {
-    transform: translateX(50%) scale(1.04);
+    /* 参考题数输入框，移除所有transform效果 */
+    transform: translateX(50%);
 }
 
 .questionCountInput {
@@ -345,7 +347,8 @@
     }
 
     .topicInput:focus {
-        transform: scale(1.02);
+        /* 参考题数输入框，移除所有transform效果 */
+        transform: none;
     }
 
     .challengeStartForm {
@@ -359,7 +362,8 @@
     }
 
     .challengeStartForm:focus-within {
-        transform: scale(1.02);
+        /* 参考题数输入框，移除所有transform效果 */
+        transform: none;
     }
 
     .questionCountInput {
