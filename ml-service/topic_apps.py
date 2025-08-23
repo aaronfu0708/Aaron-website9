@@ -169,18 +169,6 @@ def generate_questions_with_ai(topic, difficulty, count):
 
 
     try:
-        # 根據題目數量動態調整 max_tokens
-        # 1-5題：4000 tokens，6-10題：6000 tokens，11-15題：8000 tokens
-        if count <= 5:
-            max_tokens = 4000
-        elif count <= 10:
-            max_tokens = 6000
-        else:
-            max_tokens = 8000
-        
-        print(f"=== 動態調整 max_tokens ===")
-        print(f"題目數量: {count}, 設置 max_tokens: {max_tokens}")
-        
         # 使用新版 API 語法
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -189,41 +177,21 @@ def generate_questions_with_ai(topic, difficulty, count):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.8,  # 適中溫度，保持創意性
-            max_tokens=max_tokens   # 動態調整的token限制
+            max_tokens=4000   # 限制長度，提升生成速度
         )
 
         ai_response = response.choices[0].message.content
         print(f"=== OpenAI API 回應詳情 ===")
-        print(f"題目數量: {count}, 設置的 max_tokens: {max_tokens}")
-        print(f"實際使用的 tokens: {response.usage.total_tokens if hasattr(response, 'usage') else '未知'}")
+        print(f"使用的 tokens: {response.usage.total_tokens if hasattr(response, 'usage') else '未知'}")
         print(f"完成原因: {response.choices[0].finish_reason if hasattr(response.choices[0], 'finish_reason') else '未知'}")
         print(f"回應長度: {len(ai_response)} 字元")
-        print(f"是否達到token限制: {'是' if response.choices[0].finish_reason == 'length' else '否'}")
         print(f"AI 回應: {ai_response}")
         print(f"===+++++++++++++++++++===")
-        
-        # 檢查是否因為token限制而截斷
-        if response.choices[0].finish_reason == 'length':
-            print(f"⚠️ 警告：達到token限制 {max_tokens}，回應可能被截斷")
-            print(f"建議：對於 {count} 題，考慮增加 max_tokens 到 {max_tokens + 2000}")
-        
         return parse_ai_response(ai_response, count)
 
     except Exception as e:
         print(f"❌ OpenAI API 錯誤: {str(e)}")
         print(f"錯誤類型: {type(e).__name__}")
-        print(f"題目數量: {count}, 設置的 max_tokens: {max_tokens if 'max_tokens' in locals() else '未設置'}")
-        
-        # 根據錯誤類型提供具體建議
-        if "rate_limit" in str(e).lower():
-            print("💡 建議：遇到速率限制，請稍後再試")
-        elif "quota" in str(e).lower():
-            print("💡 建議：API配額不足，請檢查OpenAI賬戶")
-        elif "timeout" in str(e).lower():
-            print("💡 建議：請求超時，可能是題目數量過多，請減少題數")
-        elif "length" in str(e).lower():
-            print(f"💡 建議：回應過長，對於 {count} 題建議增加 max_tokens")
-        
         return generate_mock_questions(topic, count)
 
 
@@ -320,32 +288,13 @@ def create_quiz():
             return jsonify({"error": "Topic is required"}), 400
         
         # 呼叫 AI 生成題目
-        print(f"=== 開始生成題目 ===")
-        print(f"主題: {topic}, 難度: {difficulty}, 題數: {question_count}")
-        # 计算预估的max_tokens
-        if question_count <= 5:
-            estimated_tokens = 4000
-        elif question_count <= 10:
-            estimated_tokens = 6000
-        else:
-            estimated_tokens = 8000
-        
-        print(f"預估 max_tokens: {estimated_tokens}")
-        
         generated_questions = generate_questions_with_ai(topic, difficulty, question_count)
-        print(f"✅ 生成完成！題目數量: {len(generated_questions)}")
-        
-        # 驗證生成的題目
-        if len(generated_questions) != question_count:
-            print(f"⚠️ 警告：期望 {question_count} 題，實際生成 {len(generated_questions)} 題")
-        
+        print(f"生成的題目數量: {len(generated_questions)}, 內容: {generated_questions}")
         # 直接返回生成的題目，讓 Django 處理儲存
         return jsonify({
             "quiz_topic": topic,
             "questions": generated_questions,
-            "message": f"Successfully generated {len(generated_questions)} questions",
-            "expected_count": question_count,
-            "actual_count": len(generated_questions)
+            "message": "Questions generated successfully"
         }), 201
         
     except Exception as e:
