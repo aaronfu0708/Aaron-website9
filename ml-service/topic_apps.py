@@ -69,9 +69,9 @@ def generate_mock_questions(topic, count):
     return mock_questions
 
 def generate_questions_with_ai(topic, difficulty, count):
-    """使用 AI 生成題目，一次生成完所有題目"""
+    """使用 AI 生成題目，分批生成以確保穩定性"""
     print(f"=== 開始生成題目 ===")
-    print(f"主題: {topic}, 難度: {difficulty}, 數量: {count}")
+    print(f"主題: {topic}, 難度: {difficulty}, 總數量: {count}")
 
     # 檢查 API Key
     api_key = os.getenv('OPENAI_API_KEY', 'your-api-key-here')
@@ -80,8 +80,20 @@ def generate_questions_with_ai(topic, difficulty, count):
     if api_key == 'your-api-key-here' or not api_key:
         return generate_mock_questions(topic, count)
 
+    # 如果題目數量 <= 5，直接生成
+    if count <= 5:
+        return generate_single_batch(topic, difficulty, count)
+    
+    # 如果題目數量 > 5，分批生成
+    print(f"題目數量 {count} > 5，採用分批生成策略")
+    return generate_multiple_batches(topic, difficulty, count)
+
+def generate_single_batch(topic, difficulty, count):
+    """生成單批題目（1-5題）"""
+    print(f"=== 單批生成 {count} 題 ===")
+    
     # 使用新版 OpenAI 客戶端
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     prompt = f"""
     你是一個全知的ai，你精通各式各樣的領域。你擅於根據人們給你的主題及難度，生成出與該主題、難度相符的選擇題，提意必須清楚、完整、、邏輯嚴謹、無語病。在你把題目跟選項生成前請你先思考題目及選項是否正確，你習慣先將題目出完後再思考選項怎麼出適合，選項(A/B/C/D)中必有且只有一個正確答案，必須將正確答案隨機分配到(A/B/C/D)四個選項。
@@ -1061,6 +1073,57 @@ def extract_key_words(content):
     # 返回頻率最高的3個詞（增加數量以提供更多選擇）
     sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
     return [word for word, freq in sorted_words[:3]]
+
+def generate_multiple_batches(topic, difficulty, count):
+    """分批生成大量題目（>5題）"""
+    print(f"=== 分批生成 {count} 題 ===")
+    
+    all_questions = []
+    batch_size = 5  # 每批5題
+    
+    # 計算需要多少批
+    num_batches = (count + batch_size - 1) // batch_size  # 向上取整
+    
+    for batch_num in range(num_batches):
+        # 計算當前批次的題目數量
+        current_batch_size = min(batch_size, count - batch_num * batch_size)
+        
+        print(f"=== 生成第 {batch_num + 1}/{num_batches} 批，{current_batch_size} 題 ===")
+        
+        try:
+            # 生成當前批次的題目
+            batch_questions = generate_single_batch(topic, difficulty, current_batch_size)
+            
+            if batch_questions and len(batch_questions) == current_batch_size:
+                all_questions.extend(batch_questions)
+                print(f"✅ 第 {batch_num + 1} 批生成成功，{len(batch_questions)} 題")
+            else:
+                print(f"❌ 第 {batch_num + 1} 批生成失敗或數量不符")
+                # 如果某批失敗，生成模擬題目填充
+                mock_questions = generate_mock_questions(topic, current_batch_size)
+                all_questions.extend(mock_questions)
+                
+        except Exception as e:
+            print(f"❌ 第 {batch_num + 1} 批生成異常: {str(e)}")
+            # 生成模擬題目填充
+            mock_questions = generate_mock_questions(topic, current_batch_size)
+            all_questions.extend(mock_questions)
+    
+    print(f"=== 分批生成完成 ===")
+    print(f"總計生成: {len(all_questions)} 題")
+    print(f"期望數量: {count} 題")
+    
+    # 確保返回的題目數量正確
+    if len(all_questions) != count:
+        print(f"⚠️ 警告：實際生成 {len(all_questions)} 題，期望 {count} 題")
+        # 如果數量不足，用模擬題目補充
+        while len(all_questions) < count:
+            mock_question = generate_mock_questions(topic, 1)[0]
+            all_questions.append(mock_question)
+        # 如果數量過多，截取到正確數量
+        all_questions = all_questions[:count]
+    
+    return all_questions
 
 if __name__ == "__main__":
     # 從環境變數獲取配置，預設值為開發環境
