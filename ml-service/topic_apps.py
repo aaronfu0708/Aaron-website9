@@ -170,23 +170,24 @@ def generate_single_batch(topic, difficulty, count):
     # 使用新版 OpenAI 客戶端
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
-    # 簡化的用戶prompt，只包含變化的參數
-    user_prompt = f"""請根據以下條件生成 {count} 道選擇題：
+    # 使用完整的prompt，包含所有規則和參數
+    prompt = f"""{SYSTEM_PROMPT}
+
+請根據以下條件生成 {count} 道選擇題：
 
 輸入參數：
 主題：{topic} 
 難度：{difficulty}
 題目數量：{count} 題（必須生成完整的 {count} 題，且不會有重複的題目）
 
-請嚴格按照系統規則生成題目。"""
+請嚴格按照上述規則生成題目。"""
 
     try:
-        # 使用新版 API 語法，將長規則放在system message中
+        # 使用新版 API 語法
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": prompt}
             ],
             temperature=0.8,  # 適中溫度，保持創意性
             max_tokens=4000   # 限制長度，提升生成速度
