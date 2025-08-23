@@ -305,7 +305,7 @@ button{
     height: 100vh;
     backdrop-filter: blur(20px);
     z-index: 1000;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 移除 transition 避免與動畫衝突，解決"開啟兩次"的視覺問題 */
     display: flex;
     flex-direction: column;
     padding-top: 80px;
