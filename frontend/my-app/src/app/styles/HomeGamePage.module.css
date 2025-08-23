@@ -363,7 +363,7 @@
     }
 
     .questionCountInput {
-        font-size: 14px;
+        font-size: 16px; /* 防止iOS缩放 */
         letter-spacing: 2px;
         width: 100px;
         padding: 12px 5px;
